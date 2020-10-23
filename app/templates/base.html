@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- A little Jinja2 logic to choose page title -->
+    {% if title %}
+    <title>{{ title }} - PyBloom</title>
+    {% else %}
+    <title>Welcome to PyBloom</title>
+    {% endif %}
+
+    <!-- Bootstrap v5 CSS CDN -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/5.0.0-alpha2/css/bootstrap.min.css" integrity="sha384-DhY6onE6f3zzKbjUPRc2hOzGAdEf4/Dz+WJwBvEYL/lkkIsI3ihufq9hk9K4lVoK" crossorigin="anonymous">
+
+    <!-- Space for Custom CSS -->
+    {% block app_css %}{% endblock %}
+
+    <!-- Location of favicon -->
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+  </head>
+
+  <body>
+    <!-- Navbar Container -->
+    <div class="container-fluid">
+      <!-- Navbar Header [contains both toggle button and navbar brand] -->
+      <nav class="navbar navbar-expand-md navbar-light bg-light">
+
+        <!-- Navbar Brand [image + title, no link] -->
+        <span class="navbar-brand">
+          <img src="{{ url_for('static', filename='brand.svg') }}" height="30" class="d-inline-block align-top" alt="PyBloom">
+          PyBloom
+        </span>
+
+        <!-- Toggle Button [handles opening navbar components on mobile screens] -->
+        <button type="button" class="navbar-toggler" data-toggle="collapse" data-target="navbarNavItems" aria-expanded"false">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- Navbar Collapse [contains all other navbar components] -->
+        <div class="collapse navbar-collapse" id="navbarNavItems">
+          <!-- Navbar Menu -->
+          <div class="navbar-nav mr-auto">
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('index') }}">Weather Station</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('colours') }}">Colour Key</a>
+            </li>
+          </div>
+          <!-- a plug for my blog! -->
+          <div class="navbar-nav navbar-right">
+            <img src="{{ url_for('static', filename='MindRocketLogo.png') }}" height="30" class="d-inline-block align-top" alt="M:nd Rocket_">
+            <li class="nav-item">
+              <a class="nav-link" href="https://blog.mindrocketnow.com">Home</a>
+            </li>
+          </div>
+        </div>
+      </nav>
+    </div>
+
+    <!-- This is where the page content will go -->
+    {% block app_content %}{% endblock %}
+
+    <!-- JavaScript Bundle with Popper.js -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/5.0.0-alpha2/js/bootstrap.bundle.min.js" integrity="sha384-BOsAfwzjNJHrJ8cZidOg56tcQWfp6y72vEJ8xQ9w6Quywb24iOsW913URv1IS4GD" crossorigin="anonymous"></script>
+    <!-- Space for custom JS -->
+    {% block app_js %}{% endblock %}
+  </body>
+</html>

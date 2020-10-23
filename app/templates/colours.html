@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+
+{% block app_content %}
+  <h1>Colour key</h1>
+  <div>
+    <table class="table">
+      <tr>
+        <th scope="col">Temperature</th>
+        <th scope="col">Colour</th>
+      </tr>
+      {% for row in rows %}
+      <tr>
+        <td>{{row[1]}}</td>
+        <td id="{{row[2]}}">{{row[2]}}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+{% endblock %}
+
+
+{% block app_js %}
+  <script>
+    "use strict";
+    {% for row in rows %}
+      document.getElementById("{{row[2]}}").style.background = "#"+"{{row[2]}}";
+    {% endfor %}
+  </script>
+{% endblock %}

@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+  <h1>Latest data</h1>
+  <div>
+    <h2>Temperatures over Last 24 Hours</h2>
+    <img src="{{ url_for('static', filename=content['lastday']) }}" class="img-fluid" alt="Temperature over last day">
+    <h2>Temperatures over Last Week</h2>
+    <img src="{{ url_for('static', filename=content['lastweek']) }}" class="img-fluid" alt="Temperature over last week">
+  </div>
+{% endblock %}
