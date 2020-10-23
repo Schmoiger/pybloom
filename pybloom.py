@@ -38,9 +38,14 @@ import pyowm
 import pygal
 from pygal.style import Style
 from db_utils import db_connect, get_rows
+import credentials
 
 DATETIME_STRING = '%Y-%m-%d %H:%M:%S'
 FILEPATH = './app/static/'
+OWM_KEY = credentials.credentials['owm_key']
+HUE_USERNAME = credentials.credentials['hue_username']
+HUE_IP = credentials.credentials['hue_ip']
+HOME_LOCATION = credentials.credentials['home_location']
 
 
 class weather_observation:
@@ -54,7 +59,7 @@ class weather_observation:
         return f'Current weather: {self.detailed_status}, {self.temperature} celsius (made at {self.timestamp})'
 
     def new(self, location):  # expect e.g. 'London, GB'
-        owm = pyowm.OWM('a15c8eee1a77e17d0aa2860990d7c9f8')
+        owm = pyowm.OWM(OWM_KEY)
         mgr = owm.weather_manager()
         weather = mgr.weather_at_place(location).weather
         self.timestamp = datetime.now().strftime(DATETIME_STRING)
@@ -89,8 +94,8 @@ class hue_lamp:
 
     def __init__(self, lamp_id):
         # not accessible
-        ip = '192.168.1.2'
-        username = 'wSM7VGarb0evnMWn8dRbThoIlAQtsjP0TUC8IH7M'
+        ip = HUE_IP
+        username = HUE_USERNAME
         # accessible
         self.bridge = qhue.Bridge(ip, username)
         self.getter = self.bridge.lights[lamp_id]()
@@ -214,7 +219,7 @@ hue_lamp_ids = {
 def weather():
     # Check current weather
     observation = weather_observation()
-    observation.new('Epsom, GB')
+    observation.new(HOME_LOCATION)
     # observation.set(datetime.now().strftime(DATETIME_STRING), 23, 'dummy observation')
     print(observation)
 
