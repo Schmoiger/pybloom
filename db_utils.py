@@ -17,8 +17,8 @@ def get_rows(table, columns='*', **kwargs):
     # columns_names should be a string enclosing a tuple of selected columns
     if (table == 'colours') or (table == 'observations'):
         con = db_connect()  # connect to the database
-        cur = con.cursor()  # instantiate a cursor obj
         con.row_factory = sqlite3.Row
+        cur = con.cursor()  # instantiate a cursor obj
 
         rows_sql = ''
         args = ()
@@ -81,11 +81,3 @@ for temperature, hex_value in temp_colours.items():
 
 con.commit()
 con.close()  # close connection
-
-'''
-# DEBUG:
-sql = 'WHERE temperature = (?)'
-what = (temperature, )  # tuple with single item
-results = get_rows('colours', 'hex_value', rows_sql=sql, args=what)
-print(results[0][0])
-'''
