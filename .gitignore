@@ -1,0 +1,12 @@
+# created by virtualenv automatically
+
+__pycache__*
+Icon*
+.git
+**/*.DS_Store
+**/*_bar.svg
+**/*_pie.svg
+*_old
+credentials.py
+database.sqlite3
+pybloomweather-1601828675784-e3a293bdcdf4.json
