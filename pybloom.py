@@ -135,9 +135,9 @@ def lookup_colour(temperature):
 
 def find_temp_threshold(temp):
     # find max and min thresholds from external database
-    result = get_rows('colours', 'temperature')
+    rows = get_rows('colours')
 
-    all_thresholds = [value[0] for value in result]
+    all_thresholds = [row['temperature'] for row in rows]
     max_threshold = max(all_thresholds)
     min_threshold = min(all_thresholds)
 
@@ -169,28 +169,30 @@ def generate_graphs(timestamp):
     }
 
     # get datapoints from database
-    results = get_rows('colours')
-    hex_list = [f'#{hex}' for hex in [result[2] for result in results]]
-    temps_count = {result[1]: 0 for result in results}
+    rows = get_rows('colours')
+    hex_list = [f'#{hex}' for hex in [row['hex_value'] for row in rows]]
+    temps_count = {row['temperature']: 0 for row in rows}
 
     # 3x graphs for every reading in last day, week, month
     for string, then in observation_sets.items():
         # fetch data
         sql = 'WHERE timestamp BETWEEN datetime((?)) AND datetime((?))'
         when = (then, now)
-        results = get_rows('observations', rows_sql=sql, args=when)
+        rows = get_rows('observations', rows_sql=sql, args=when)
 
         # generate bar graph
-        times = []
-        temps = []
-        for row in results:
-            times.append(row[1])
-            temps.append(row[2])
+        times = [row['timestamp'] for row in rows]
+        temps = [row['temperature'] for row in rows]
+
         bar_chart = pygal.Bar(x_label_rotation=20,
                               x_labels_major_count=6,
                               show_minor_x_labels=False,
                               show_legend=False)
-        bar_chart.add('Temperature', temps)
+        bar_chart.add('Temperature', [
+            {'value': temp,
+            'color': '#' + lookup_colour(find_temp_threshold(temp))}
+            for temp in temps]
+        )
         bar_chart.x_labels = times
         filename = string + '_bar.svg'
         bar_chart.render_to_file(FILEPATH + filename)
@@ -200,8 +202,7 @@ def generate_graphs(timestamp):
             temp_threshold = find_temp_threshold(temp)
             temps_count[temp_threshold] += 1
         custom_style = Style(colors=(tuple(hex_list)))
-        pie_chart = pygal.Pie(inner_radius=0.6,
-                              style=custom_style)
+        pie_chart = pygal.Pie(inner_radius=0.6, style=custom_style)
         for temp, count in temps_count.items():
             pie_chart.add(str(temp), count)
         filename = string + '_pie.svg'
