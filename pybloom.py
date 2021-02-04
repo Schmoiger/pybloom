@@ -141,7 +141,7 @@ def find_temp_threshold(temp):
     max_threshold = max(all_thresholds)
     min_threshold = min(all_thresholds)
 
-    temp_threshold = int(temp/5) * 5
+    temp_threshold = int((temp+15)/5) * 5 - 15
     if temp_threshold > max_threshold:
         temp_threshold = max_threshold
     if temp_threshold < min_threshold:
