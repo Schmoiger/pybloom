@@ -1,5 +1,4 @@
-
-'''
+"""
 Weather station - Technical stories:
 1) Check current weather
 2) Assign colour depending on temperature
@@ -17,18 +16,18 @@ Technologies used:
 - Philips Hue API: set lights colours
 - SQLite3: database
 - pyGal: lightweight graphing library
-- Flask: framework for web site
+- Flask: framework for website
 - Jinja2: scripting language for Flask
-- HTML5: basic structure of web site
+- HTML5: basic structure of website
 - Bootstrap CSS: framework for CSS
-- JavaScript: interactive features of web site
+- JavaScript: interactive features of website
 - Advanced Python Scheduler: periodic running of script
 
 Notes:
 - Program is intended to be called periodically
 - Logged data is persistent
 - Using free versions of all API, so there is limit to number of calls
-'''
+"""
 
 from datetime import datetime, timedelta
 import qhue
@@ -48,7 +47,7 @@ HUE_IP = credentials.credentials['hue_ip']
 HOME_LOCATION = credentials.credentials['home_location']
 
 
-class weather_observation:
+class WeatherObservation:
 
     def __init__(self, timestamp=None, temperature=None, detailed_status=None):
         self.timestamp = timestamp,
@@ -61,10 +60,10 @@ class weather_observation:
     def new(self, location):  # expect e.g. 'London, GB'
         owm = pyowm.OWM(OWM_KEY)
         mgr = owm.weather_manager()
-        weather = mgr.weather_at_place(location).weather
+        weather_reading = mgr.weather_at_place(location).weather
         self.timestamp = datetime.now().strftime(DATETIME_STRING)
-        self.temperature = weather.temperature('celsius')['temp']
-        self.detailed_status = weather.detailed_status
+        self.temperature = weather_reading.temperature('celsius')['temp']
+        self.detailed_status = weather_reading.detailed_status
         return 'Fetched new observation'
 
     def log(self):
@@ -90,7 +89,7 @@ class weather_observation:
         return 'Observation set'
 
 
-class hue_lamp:
+class HueLamp:
 
     def __init__(self, lamp_id):
         # not accessible
@@ -128,7 +127,7 @@ class hue_lamp:
 def lookup_colour(temperature):
     # lookup table of temperatures to colours in database.sqlite3
     sql = 'WHERE temperature = (?)'
-    what = (temperature, )  # tuple with single item
+    what = (temperature,)  # tuple with single item
     results = get_rows('colours', 'hex_value', rows_sql=sql, args=what)
     return results[0][0]  # to return the hex value string only
 
@@ -141,7 +140,7 @@ def find_temp_threshold(temp):
     max_threshold = max(all_thresholds)
     min_threshold = min(all_thresholds)
 
-    temp_threshold = int((temp+15)/5) * 5 - 15
+    temp_threshold = int((temp + 15) / 5) * 5 - 15
     if temp_threshold > max_threshold:
         temp_threshold = max_threshold
     if temp_threshold < min_threshold:
@@ -170,10 +169,10 @@ def generate_graphs(timestamp):
 
     # get datapoints from database
     rows = get_rows('colours')
-    hex_list = [f'#{hex}' for hex in [row['hex_value'] for row in rows]]
+    hex_list = [f'#{hex_string}' for hex_string in [row['hex_value'] for row in rows]]
     temps_count = {row['temperature']: 0 for row in rows}
 
-    # 3x graphs for every reading in last day, week, month
+    # graphs for every reading in last day, week, month
     for string, then in observation_sets.items():
         # fetch data
         sql = 'WHERE timestamp BETWEEN datetime((?)) AND datetime((?))'
@@ -190,9 +189,9 @@ def generate_graphs(timestamp):
                               show_legend=False)
         bar_chart.add('Temperature', [
             {'value': temp,
-            'color': '#' + lookup_colour(find_temp_threshold(temp))}
+             'color': '#' + lookup_colour(find_temp_threshold(temp))}
             for temp in temps]
-        )
+                      )
         bar_chart.x_labels = times
         filename = string + '_bar.svg'
         bar_chart.render_to_file(FILEPATH + filename)
@@ -208,6 +207,56 @@ def generate_graphs(timestamp):
         filename = string + '_pie.svg'
         pie_chart.render_to_file(FILEPATH + filename)
 
+        # generate radar chart
+        radar_chart = pygal.Radar(x_labels_major_count=12,
+                                  show_minor_x_labels=False,
+                                  show_legend=False)
+        radar_chart.add('Temperature', [{'value': temp,
+                                         'color': '#' + lookup_colour(find_temp_threshold(temp))}
+                                        for temp in temps])
+        radar_chart.x_labels = times
+        filename = string + '_radar.svg'
+        radar_chart.render_to_file(FILEPATH + filename)
+
+    # calculate values for annual graph
+    from statistics import mean
+    from dateutil.relativedelta import relativedelta
+
+    month_name = {1: 'Jan', 2: 'Feb', 3: 'Mar', 4: 'Apr', 5: 'May', 6: 'Jun', 7: 'Jul', 8: 'Aug', 9: 'Sep', 10: 'Oct',
+                  11: 'Nov', 12: 'Dec'}
+    month_temps = {}
+    month_colour = {}
+
+    for i in range(12):
+        # fetch data
+        start = datetime.today() - relativedelta(months=(12 - i), day=1, hour=0, minute=0, second=0, microsecond=0)
+        end = start + relativedelta(months=1)
+        sql = 'WHERE timestamp BETWEEN datetime((?)) AND datetime((?))'
+        when = (start, end)
+        rows = get_rows('observations', rows_sql=sql, args=when)
+
+        month_temps[start] = []
+        month_temps[start].extend(row['temperature'] for row in rows)
+        month_colour[start] = '#' + lookup_colour(find_temp_threshold(mean(month_temps[start])))
+
+    # box plot of preceding 12 months
+    custom_style = Style(
+        background='transparent',
+        plot_background='transparent',
+        opacity='.6',
+        opacity_hover='.9',
+        transition='400ms ease-in',
+        colors=([colour for month, colour in list(month_colour.items())]))
+
+    box_plot = pygal.Box(legend_at_bottom=True,
+                         legend_at_bottom_columns=12,
+                         print_labels=True,
+                         style=custom_style)
+    for month_start, temps in month_temps.items():
+        box_plot.add(month_name[month_start.month], temps)
+    filename = 'annual_box.svg'
+    box_plot.render_to_file(FILEPATH + filename)
+
     return 'Created graphs'
 
 
@@ -219,16 +268,15 @@ hue_lamp_ids = {
 
 def weather():
     # Check current weather
-    observation = weather_observation()
+    observation = WeatherObservation()
     observation.new(HOME_LOCATION)
-    # observation.set(datetime.now().strftime(DATETIME_STRING), 23, 'dummy observation')
     print(observation)
 
     # Set lounge bloom to current temperature
-    lounge_bloom = hue_lamp(hue_lamp_ids['lounge bloom'])
+    lounge_bloom = HueLamp(hue_lamp_ids['lounge bloom'])
     lounge_bloom.set_colour(convert_temp_to_colour(observation.temperature))
     # Set den bloom to current temperature
-    den_bloom = hue_lamp(hue_lamp_ids['den bloom'])
+    den_bloom = HueLamp(hue_lamp_ids['den bloom'])
     den_bloom.set_colour(convert_temp_to_colour(observation.temperature))
 
     # Log weather observation
@@ -240,4 +288,5 @@ def weather():
     return 'Fetched weather'
 
 
-weather()
+if __name__ == '__main__':
+    weather()

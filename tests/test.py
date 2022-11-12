@@ -1,14 +1,14 @@
 
 # need to import modules from files in parent directory
 # https://codeolives.com/2020/01/10/python-reference-module-in-parent-directory/
-from pybloom import lookup_colour, find_temp_threshold
-import pygal
-import db_utils
 import os
 import sys
 currentdir = os.path.dirname(os.path.realpath(__file__))
 parentdir = os.path.dirname(currentdir)
 sys.path.append(parentdir)
+from pybloom import lookup_colour, find_temp_threshold
+import pygal
+import db_utils
 
 
 # testing graphing methods

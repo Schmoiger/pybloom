@@ -4,9 +4,8 @@ __pycache__*
 Icon*
 .git
 **/*.DS_Store
-**/*_bar.svg
-**/*_pie.svg
-*_old
-credentials.py
+**/*.svg
+*.old
+credentials.*
 database.sqlite3
 pybloomweather*.json
