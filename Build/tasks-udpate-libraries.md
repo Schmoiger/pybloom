@@ -1,264 +1,171 @@
 # Library Upgrade Review
 
-This document reviews every dependency in `requirements.txt`, compares the current pinned version against the latest release, and identifies breaking changes that affect the PyBloom codebase.
-
-## Version comparison
-
-| Library | Current | Latest | Breaking changes? |
-|---------|---------|--------|-------------------|
-| APScheduler | 3.6.3 | 3.11.2 | No |
-| certifi | 2020.6.20 | 2026.5.20 | No |
-| chardet | 3.0.4 | 7.4.3 | No (see note) |
-| click | 7.1.2 | 8.4.1 | No (via Flask) |
-| Flask | 1.1.2 | 3.1.3 | No |
-| geojson | 2.5.0 | 3.3.0 | No (not used in app code) |
-| idna | 2.10 | 3.18 | No |
-| itsdangerous | 1.1.0 | 2.2.0 | No (via Flask) |
-| Jinja2 | 2.11.2 | 3.1.6 | No |
-| MarkupSafe | 1.1.1 | 3.0.3 | No (via Jinja2) |
-| pygal | 2.4.0 | 3.1.0 | No |
-| pyowm | 3.1.1 | 3.5.0 | No |
-| PySocks | 1.7.1 | 1.7.1 | No change |
-| pytz | 2020.1 | 2026.2 | No |
-| qhue | 1.0.12 | 2.0.1 | No |
-| requests | 2.24.0 | 2.34.2 | No |
-| rgbxy | 0.5 | 0.5 | No change |
-| six | 1.15.0 | 1.17.0 | Can remove |
-| tzlocal | 2.1 | 5.3.1 | No |
-| urllib3 | 1.25.11 | 2.7.0 | Must upgrade with requests |
-| Werkzeug | 1.0.1 | 3.1.8 | No (via Flask) |
-| python-dateutil | (unpinned) | 2.9.0.post0 | No |
+Pragmatic review of the dependency list for PyBloom. The goal here is not to chase the newest version of everything blindly, but to identify which upgrades are worthwhile, which dependencies are probably unnecessary, and which changes are likely to create avoidable churn.
 
 ---
 
-## Per-library analysis
+## 1. Bugs
 
-### 1. Flask 1.1.2 → 3.1.3
+The current dependency set is old. The main risk is not a single broken package, but an overly optimistic upgrade plan that assumes everything will work unchanged.
 
-**Changes across major versions:**
+What looks sensible:
 
-- **Flask 2.0**: Dropped Python 2/3.5. Requires Click 8.0. Removed `flask.json.JSONEncoder`/`JSONDecoder`. Removed `before_first_request`.
-- **Flask 2.2**: Deprecated `before_first_request` (removed in 2.3).
-- **Flask 3.0**: Requires Python 3.8+. Removed `FLASK_ENV`/`ENV` config — use `FLASK_DEBUG`. Removed `TEMPLATE_AUTO_RELOAD`. `url_for()` no longer escapes `/` by default (no impact on our patterns).
-- **Flask 3.1**: Requires Python 3.9+. Response class is now `werkzeug.wrappers.Response` directly.
+- upgrade the core Flask stack together
+- upgrade requests/urllib3 together
+- keep the rest simple unless the code actually needs changes
 
-**Impact on PyBloom: No code changes needed.**
+What I would not claim:
 
-- `from flask import Flask; app = Flask(__name__)` ✅ unchanged
-- `@app.route('/')` and `@app.route('/index')` ✅ unchanged
-- `render_template('index.html', title='Home', content=CONTENT)` ✅ unchanged
-- `@app.after_request` with response header modification ✅ unchanged
-- `url_for('static', filename='...')` and `url_for('index')` ✅ unchanged
-- Jinja2 template syntax in all `.html` files ✅ unchanged
+- that all upgrades are guaranteed to be code-change free
+- that version pins can be replaced without testing
+- that every transitive dependency should be treated as a first-class project dependency
 
 ---
 
-### 2. APScheduler 3.6.3 → 3.11.2
+## 2. Cleanup
 
-**Changes:** All within the 3.x series — backwards compatible. APScheduler 3.9+ prefers `zoneinfo` (stdlib) over `pytz` for timezone handling, but `pytz` still works as a fallback. Note: APScheduler 4.x has a completely new API, but we are not going there.
+### 2.1 Core web stack
 
-**Impact on PyBloom: No code changes needed.**
+**Libraries:** `Flask`, `Werkzeug`, `Jinja2`, `click`, `itsdangerous`, `MarkupSafe`
 
-- `BackgroundScheduler(daemon=True)` ✅ unchanged
-- `schedule.add_job(lambda: weather(), 'interval', minutes=10)` ✅ unchanged
-- `schedule.start()` ✅ unchanged
+These are tied together. Upgrading one usually implies upgrading the others to a compatible set.
 
----
+**Recommendation:**
+- upgrade them together
+- test the app after the upgrade
+- do not try to upgrade Flask in isolation
 
-### 3. Jinja2 2.11.2 → 3.1.6
-
-**Changes:**
-
-- Jinja2 3.0 requires Python 3.7+.
-- Removed deprecated `contextfunction` and `contextfilter` (replaced by `pass_context` decorator). Only affects custom extensions, not regular templates.
-- `Markup` class must be imported from `markupsafe`, not `jinja2`. PyBloom does not import `Markup` directly.
-- Autoescaping is now enabled by default for `.html`, `.htm`, `.xml`, `.xhtml` templates. This is better security and does not cause issues with our templates.
-
-**Impact on PyBloom: No code changes needed.**
-
-- All template syntax (`{% extends %}`, `{% block %}`, `{% if %}`, `{{ url_for() }}`, `{{ title }}`) ✅ unchanged
-- `render_template()` calls in `routes.py` ✅ unchanged
+This is the main compatibility cluster in the project.
 
 ---
 
-### 4. Werkzeug 1.0.1 → 3.1.8
+### 2.2 HTTP stack
 
-**Changes:** Werkzeug is an internal dependency of Flask. Key changes:
+**Libraries:** `requests`, `urllib3`, `certifi`, `idna`
 
-- Werkzeug 2.0 requires Python 3.6+; Werkzeug 3.0 requires Python 3.8+.
-- `werkzeug.utils.escape()` removed — use `markupsafe.escape()`. Not used in PyBloom.
-- Request/Response classes reorganised — but Flask abstracts these.
+These should move together as well.
 
-**Impact on PyBloom: No code changes needed.** Flask handles all Werkzeug interactions internally.
+**Recommendation:**
+- upgrade `requests` and `urllib3` as a pair
+- let the supporting libraries follow the compatible versions pulled in by the resolver
 
----
-
-### 5. Click 7.1.2 → 8.4.1
-
-**Changes:** Click 8.0 requires Python 3.7+. Flask was updated to use Click 8.x for its CLI (`flask run`, `flask shell`, etc.).
-
-**Impact on PyBloom: No code changes needed.** Flask CLI integration works transparently.
+This is the part most likely to affect network code indirectly, so it should be verified rather than assumed.
 
 ---
 
-### 6. itsdangerous 1.1.0 → 2.2.0
+### 2.3 Scheduler and timezone support
 
-**Changes:** itsdangerous 2.0 requires Python 3.7+. Flask uses itsdangerous internally for session signing. APIs (`Signer`, `TimedSerializer`, etc.) are largely unchanged.
+**Libraries:** `APScheduler`, `tzlocal`, `pytz`
 
-**Impact on PyBloom: No code changes needed.** Note: PyBloom does not currently use Flask sessions or set `app.secret_key`, so this is entirely transparent.
+The current code uses a simple background scheduler. This is not a complicated scheduler setup, so the upgrade risk is moderate.
 
----
-
-### 7. MarkupSafe 1.1.1 → 3.0.3
-
-**Changes:** MarkupSafe 2.0 requires Python 3.5+; 3.0 requires Python 3.7+. `soft_unicode()` removed in 2.1 (not used). `HTMLSanitizer` removed (not used).
-
-**Impact on PyBloom: No code changes needed.** Jinja2 handles MarkupSafe integration internally.
+**Recommendation:**
+- upgrade `APScheduler`
+- keep `pytz` only if the current scheduler/runtime still needs it
+- do not introduce timezone refactors just for the sake of it
 
 ---
 
-### 8. pygal 2.4.0 → 3.1.0
+## 3. Nice-to-have
 
-**Changes:** pygal 3.x requires Python 3.7+. The chart API is backwards compatible — all constructor parameters, `add()`, `render_to_file()`, and `Style()` work identically.
+These are probably straightforward upgrades, but they should still be validated in the app:
 
-**Impact on PyBloom: No code changes needed.**
+- `pygal`
+- `pyowm`
+- `qhue`
+- `rgbxy`
+- `python-dateutil`
 
-- `pygal.Bar(x_label_rotation=20, ...)` ✅ unchanged
-- `pygal.Pie(inner_radius=0.6, style=custom_style)` ✅ unchanged
-- `pygal.Box(legend_at_bottom=True, ...)` ✅ unchanged
-- `chart.add('name', data)` with dict-based values ✅ unchanged
-- `chart.render_to_file(path)` ✅ unchanged
-- `Style(colors=(...))` ✅ unchanged
-
----
-
-### 9. pyowm 3.1.1 → 3.5.0
-
-**Changes:** Minor version bump within 3.x — backwards compatible. Internal API improvements and bug fixes.
-
-**Impact on PyBloom: No code changes needed.**
-
-- `pyowm.OWM(OWM_KEY)` ✅ unchanged
-- `owm.weather_manager()` ✅ unchanged
-- `mgr.weather_at_place(location).weather` ✅ unchanged
-- `weather.temperature('celsius')['temp']` ✅ unchanged
-- `weather.detailed_status` ✅ unchanged
+**Recommendation:** Upgrade them as part of the same dependency refresh, then run the app and a small manual smoke test:
+- fetch weather
+- write a database row
+- render the graphs
+- talk to the Hue bridge if you have it available
 
 ---
 
-### 10. qhue 1.0.12 → 2.0.1
+### 3.2 Dependencies That Look Unnecessary
 
-**Changes (from CHANGELOG and source code review):**
+### 3.2.1 `geojson`
 
-- **Requires Python 3 only** (dropped Python 2 support). PyBloom already requires Python 3.14, so no impact.
-- **Added remote bridge access** (if not on LAN). New feature, not breaking.
-- **`QhueException` now contains `type` and `address` info.** Additive change.
-- **API patterns unchanged.** The `Resource` class uses `__call__` for GET/PUT/POST and `__getattr__`/`__getitem__` for attribute access. All existing patterns work identically.
+This dependency does not appear to be used by the codebase.
 
-**Impact on PyBloom: No code changes needed.**
-
-- `qhue.Bridge(ip, username)` ✅ unchanged — same constructor signature
-- `self.bridge.lights[lamp_id]()` ✅ unchanged — `__call__` does GET
-- `self.bridge.lights[lamp_id].state(on=True)` ✅ unchanged — `.state` creates a Resource via `__getattr__`, calling it does PUT with kwargs
-- `self.bridge.lights[lamp_id].state(xy=colour)` ✅ unchanged
+**Recommendation:** Remove it unless you know it is needed for something outside the current source tree.
 
 ---
 
-### 11. requests 2.24.0 → 2.34.2
+### 3.2.2 `six`
 
-**Changes:** All within the 2.x series — backwards compatible. Key notes:
+This is a Python 2 compatibility layer. The project targets modern Python.
 
-- requests 2.28+ switched default character detection from `chardet` to `charset-normalizer`.
-- requests 2.32+ is required for full compatibility with `urllib3` 2.x.
-
-**Impact on PyBloom: No code changes needed.** All `requests` calls go through qhue and pyowm libraries.
+**Recommendation:** Remove it if nothing imports it directly or indirectly for a reason you care about.
 
 ---
 
-### 12. urllib3 1.25.11 → 2.7.0
+### 3.2.3 `chardet`
 
-**Changes:**
+The project does not use `chardet` directly. In modern `requests` setups it is often no longer the default charset detector anyway.
 
-- urllib3 2.0 requires Python 3.7+.
-- `urllib3.contrib.pyopenssl` removed (not used).
-- SSL/TLS defaults changed to be stricter.
-- **Must upgrade `requests` alongside `urllib3`** — requests 2.24.0 is NOT compatible with urllib3 2.x.
-
-**Impact on PyBloom: No code changes needed**, but requests must be upgraded to 2.28+ (we are going to 2.34.2, which is fine).
+**Recommendation:** Remove it unless the resolver or another package specifically requires it.
 
 ---
 
-### 13. chardet 3.0.4 → 7.4.3
+### 3.2.4 `pysocks`
 
-**Changes:** chardet 5.0+ requires Python 3.7+. However, since requests 2.28+ uses `charset-normalizer` by default, `chardet` may no longer be needed as a direct dependency.
+This may still be pulled in transitively by something else, but it is not obviously used in the application code.
 
-**Impact on PyBloom:** PyBloom does not use `chardet` directly — it is only a transitive dependency of requests. **Recommendation: Remove from `requirements.txt`** or replace with `charset-normalizer` if requests pulls it in.
-
----
-
-### 14. geojson 2.5.0 → 3.3.0
-
-**Note:** `geojson` is listed in `requirements.txt` but is not imported anywhere in the PyBloom codebase. It may be an unused dependency.
-
-**Impact on PyBloom:** Can be removed from `requirements.txt` unless there are plans to use it.
+**Recommendation:** Keep only if the dependency resolver or runtime actually needs it.
 
 ---
 
-### 15. pytz 2020.1 → 2026.2
+## 4. What The Upgrade Plan Should Actually Say
 
-**Changes:** Timezone data updates only. No API changes.
+The current document claims that no code changes are needed across the entire upgrade. That is too strong.
 
-**Note:** APScheduler 3.9+ prefers `zoneinfo` (Python 3.9+ stdlib) over `pytz`. The `pytz` dependency could potentially be removed if APScheduler is configured to use `zoneinfo`, but keeping it is harmless.
+More realistic wording:
 
----
+- many of these upgrades will probably work without source changes
+- some combinations may require small fixes once tested
+- the only honest way to know is to upgrade in a branch and run the app
 
-### 16. python-dateutil (unpinned) → 2.9.0.post0
-
-**Changes:** No breaking changes for the patterns used (`relativedelta`).
-
-- `from dateutil.relativedelta import relativedelta` ✅ unchanged
-
-**Note:** This dependency is already unpinned in `requirements.txt` — it will resolve to the latest version automatically.
+This is especially true because the current dependency versions are quite old.
 
 ---
 
-### 17. Other dependencies (no changes needed)
+## 5. Practical Upgrade Order
 
-| Library | Current → Latest | Notes |
-|---------|-----------------|-------|
-| certifi | 2020.6.20 → 2026.5.20 | CA certificate bundle updates only |
-| idna | 2.10 → 3.18 | IDNA encoding updates only |
-| PySocks | 1.7.1 → 1.7.1 | No change |
-| rgbxy | 0.5 → 0.5 | No change |
-| six | 1.15.0 → 1.17.0 | **Can be removed** — Python 2/3 compat layer no longer needed |
-| tzlocal | 2.1 → 5.3.1 | Timezone detection still works; major version bump is due to API modernisation |
+If you want to do this without making the repo unstable, use this order:
+
+1. Upgrade the core Flask stack together
+2. Upgrade `requests` and `urllib3`
+3. Upgrade `APScheduler`
+4. Upgrade the project-specific libraries
+5. Remove unused dependencies
+6. Run the app and confirm graphs, DB writes, and Hue actions still work
+
+That sequence limits the blast radius if something breaks.
 
 ---
 
-## Summary: Required code changes
+## 6. Files To Update
 
-### No code changes needed
+### `pyproject.toml`
 
-The PyBloom codebase does not need any source code modifications to upgrade all libraries to their latest versions. All API patterns used across `pybloom.py`, `db_utils.py`, `app/__init__.py`, `app/routes.py`, `app/content.py`, and all templates are compatible with the latest versions.
+Update dependency pins there first, because that is the actual project source of truth if `uv` is the main workflow.
 
-### `requirements.txt` changes
+### `requirements.txt`
 
-1. **Update all version pins** to latest versions.
-2. **Remove `chardet`** — replaced by `charset-normalizer` in requests 2.28+.
-3. **Remove `six`** — Python 2/3 compatibility layer no longer needed.
-4. **Consider removing `geojson`** — not imported anywhere in the codebase.
-5. **Consider removing `pytz`** — APScheduler 3.9+ prefers stdlib `zoneinfo` (Python 3.9+).
+Only keep this file if you actually need it for deployment or compatibility reasons. If you do keep it, regenerate it from the same dependency set so it does not drift.
 
-### `pyproject.toml` changes
+---
 
-Update the `dependencies` list to match the new `requirements.txt` versions.
+## 7. Bottom Line
 
-### Files that need NO changes
+The original library review was directionally fine, but it overstated how safe the upgrades are.
 
-- `app.py` — no changes
-- `app/__init__.py` — no changes
-- `app/routes.py` — no changes
-- `app/content.py` — no changes
-- `db_utils.py` — no changes
-- `pybloom.py` — no changes
-- All `.html` templates — no changes
+The practical version is:
+
+- upgrade the dependency groups together
+- remove the obvious dead weight
+- test the app after each meaningful step
+- do not assume everything is source-compatible just because it is within the same major line
