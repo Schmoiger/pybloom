@@ -14,13 +14,14 @@ if str(PROJECT_ROOT) not in sys.path:
 if not hasattr(ast, 'Str'):
     class _CompatStr(ast.Constant):
         _fields = ('s',)
+        _field_types = {'s': str}
         _attributes = ('lineno', 'col_offset', 'end_lineno', 'end_col_offset')
 
         def __new__(cls, s=''):
             return ast.Constant.__new__(cls, s)
 
         def __init__(self, s=''):
-            super().__init__(value=s)
+            ast.Constant.__init__(self, s)
 
         @property
         def s(self):
