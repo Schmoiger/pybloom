@@ -174,6 +174,7 @@ Why this matters:
 ---
 
 ### 2.9 Template alt text is duplicated and inaccurate
+✅ DONE
 
 **File:** `app/templates/index.html`
 
