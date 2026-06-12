@@ -1,3 +1,4 @@
+import sitecustomize
 import logging
 import ast
 import sys
@@ -28,7 +29,9 @@ if not hasattr(ast, 'Str'):
 
     ast.Str = _CompatStr
 
-if 'pkg_resources' not in sys.modules:
+try:
+    import pkg_resources as _real_pkg_resources
+except ImportError:
     pkg_resources_stub = types.ModuleType('pkg_resources')
 
     class DistributionNotFound(Exception):

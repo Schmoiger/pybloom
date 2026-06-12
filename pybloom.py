@@ -28,7 +28,7 @@ Notes:
 - Logged data is persistent
 - Using free versions of all API, so there is limit to number of calls
 """
-
+import sitecustomize
 from datetime import datetime, timedelta
 import logging
 from statistics import mean
@@ -271,7 +271,10 @@ def generate_graphs(timestamp: str) -> str:
 
         month_temps[start] = []
         month_temps[start].extend(row['temperature'] for row in rows)
-        month_colour[start] = '#' + lookup_colour(find_temp_threshold(mean(month_temps[start])))
+        if month_temps[start]:
+            month_colour[start] = '#' + lookup_colour(find_temp_threshold(mean(month_temps[start])))
+        else:
+            month_colour[start] = '#ffffff'
 
     # box plot of preceding 12 months
     custom_style = Style(

@@ -4,6 +4,14 @@ import ast
 import sys
 import types
 from http import client as http_client
+import collections
+import collections.abc
+
+# Collections compatibility shim for python 3.10+
+for name in ('Iterable', 'Mapping', 'MutableMapping', 'Sequence', 'MutableSequence', 'Container', 'Callable'):
+    if not hasattr(collections, name):
+        setattr(collections, name, getattr(collections.abc, name))
+
 
 
 if not hasattr(ast, 'Str'):
@@ -29,7 +37,9 @@ if not hasattr(ast, 'Str'):
     ast.Str = _CompatStr
 
 
-if 'pkg_resources' not in sys.modules:
+try:
+    import pkg_resources as _real_pkg_resources
+except ImportError:
     pkg_resources_stub = types.ModuleType('pkg_resources')
 
     class DistributionNotFound(Exception):
@@ -45,6 +55,7 @@ if 'pkg_resources' not in sys.modules:
     pkg_resources_stub.get_distribution = get_distribution
     pkg_resources_stub.iter_entry_points = iter_entry_points
     sys.modules['pkg_resources'] = pkg_resources_stub
+
 
 
 if 'urllib3.packages.six.moves.http_client' not in sys.modules:
