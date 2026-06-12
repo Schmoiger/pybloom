@@ -30,6 +30,7 @@ Notes:
 """
 
 from datetime import datetime, timedelta
+import logging
 import qhue
 from rgbxy import Converter
 from rgbxy import GamutA
@@ -38,6 +39,8 @@ import pygal
 from pygal.style import Style
 from db_utils import db_connect, get_rows
 import credentials
+
+logger = logging.getLogger(__name__)
 
 DATETIME_STRING = '%Y-%m-%d %H:%M:%S'
 FILEPATH = './app/static/'
@@ -58,13 +61,17 @@ class WeatherObservation:
         return f'Current weather: {self.detailed_status}, {self.temperature} celsius (made at {self.timestamp})'
 
     def fetch(self, location):  # expect e.g. 'London, GB'
-        owm = pyowm.OWM(OWM_KEY)
-        mgr = owm.weather_manager()
-        weather_reading = mgr.weather_at_place(location).weather
-        self.timestamp = datetime.now().strftime(DATETIME_STRING)
-        self.temperature = weather_reading.temperature('celsius')['temp']
-        self.detailed_status = weather_reading.detailed_status
-        return 'Fetched new observation'
+        try:
+            owm = pyowm.OWM(OWM_KEY)
+            mgr = owm.weather_manager()
+            weather_reading = mgr.weather_at_place(location).weather
+            self.timestamp = datetime.now().strftime(DATETIME_STRING)
+            self.temperature = weather_reading.temperature('celsius')['temp']
+            self.detailed_status = weather_reading.detailed_status
+            return 'Fetched new observation'
+        except Exception:
+            logger.exception('Failed to fetch weather for %s', location)
+            raise
 
     def log(self):
         # write to external database
@@ -94,16 +101,20 @@ class WeatherObservation:
 class HueLamp:
 
     def __init__(self, lamp_id):
-        # not accessible
-        ip = HUE_IP
-        username = HUE_USERNAME
-        # accessible
-        self.bridge = qhue.Bridge(ip, username)
-        self.getter = self.bridge.lights[lamp_id]()
-        self.setter = self.bridge.lights[lamp_id]
-        self.is_on = self.getter['state']['on']
-        self.colour = self.getter['state']['xy']
-        self.name = self.getter['name']
+        try:
+            # not accessible
+            ip = HUE_IP
+            username = HUE_USERNAME
+            # accessible
+            self.bridge = qhue.Bridge(ip, username)
+            self.getter = self.bridge.lights[lamp_id]()
+            self.setter = self.bridge.lights[lamp_id]
+            self.is_on = self.getter['state']['on']
+            self.colour = self.getter['state']['xy']
+            self.name = self.getter['name']
+        except Exception:
+            logger.exception('Failed to initialise Hue lamp %s', lamp_id)
+            raise
 
     def __str__(self):
         if self.is_on:
@@ -121,9 +132,13 @@ class HueLamp:
         return 'Lamp turned off'
 
     def set_colour(self, colour):  # colour is a tuple of xy values
-        self.setter.state(on=True)
-        self.setter.state(xy=colour)
-        return 'Lamp changed colour'
+        try:
+            self.setter.state(on=True)
+            self.setter.state(xy=colour)
+            return 'Lamp changed colour'
+        except Exception:
+            logger.exception('Failed to set lamp colour to %s', colour)
+            raise
 
 
 def lookup_colour(temperature):
@@ -196,7 +211,11 @@ def generate_graphs(timestamp):
                       )
         bar_chart.x_labels = times
         filename = string + '_bar.svg'
-        bar_chart.render_to_file(FILEPATH + filename)
+        try:
+            bar_chart.render_to_file(FILEPATH + filename)
+        except Exception:
+            logger.exception('Failed to render bar chart %s', filename)
+            raise
 
         # generate pie chart
         for temp in temps:
@@ -207,7 +226,11 @@ def generate_graphs(timestamp):
         for temp, count in temps_count.items():
             pie_chart.add(str(temp), count)
         filename = string + '_pie.svg'
-        pie_chart.render_to_file(FILEPATH + filename)
+        try:
+            pie_chart.render_to_file(FILEPATH + filename)
+        except Exception:
+            logger.exception('Failed to render pie chart %s', filename)
+            raise
 
         # generate radar chart
         radar_chart = pygal.Radar(x_labels_major_count=12,
@@ -218,7 +241,11 @@ def generate_graphs(timestamp):
                                         for temp in temps])
         radar_chart.x_labels = times
         filename = string + '_radar.svg'
-        radar_chart.render_to_file(FILEPATH + filename)
+        try:
+            radar_chart.render_to_file(FILEPATH + filename)
+        except Exception:
+            logger.exception('Failed to render radar chart %s', filename)
+            raise
 
     # calculate values for annual graph
     from statistics import mean
@@ -257,7 +284,11 @@ def generate_graphs(timestamp):
     for month_start, temps in month_temps.items():
         box_plot.add(month_name[month_start.month], temps)
     filename = 'annual_box.svg'
-    box_plot.render_to_file(FILEPATH + filename)
+    try:
+        box_plot.render_to_file(FILEPATH + filename)
+    except Exception:
+        logger.exception('Failed to render annual box chart %s', filename)
+        raise
 
     return 'Created graphs'
 
@@ -269,25 +300,29 @@ hue_lamp_ids = {
 
 
 def weather():
-    # Check current weather
-    observation = WeatherObservation()
-    observation.fetch(HOME_LOCATION)
-    print(observation)
+    try:
+        # Check current weather
+        observation = WeatherObservation()
+        observation.fetch(HOME_LOCATION)
+        print(observation)
 
-    # Set lounge bloom to current temperature
-    lounge_bloom = HueLamp(hue_lamp_ids['lounge bloom'])
-    lounge_bloom.set_colour(convert_temp_to_colour(observation.temperature))
-    # Set den bloom to current temperature
-    den_bloom = HueLamp(hue_lamp_ids['den bloom'])
-    den_bloom.set_colour(convert_temp_to_colour(observation.temperature))
+        # Set lounge bloom to current temperature
+        lounge_bloom = HueLamp(hue_lamp_ids['lounge bloom'])
+        lounge_bloom.set_colour(convert_temp_to_colour(observation.temperature))
+        # Set den bloom to current temperature
+        den_bloom = HueLamp(hue_lamp_ids['den bloom'])
+        den_bloom.set_colour(convert_temp_to_colour(observation.temperature))
 
-    # Log weather observation
-    observation.log()
+        # Log weather observation
+        observation.log()
 
-    # generate new graphs
-    generate_graphs(observation.timestamp)
+        # generate new graphs
+        generate_graphs(observation.timestamp)
 
-    return 'Fetched weather'
+        return 'Fetched weather'
+    except Exception:
+        logger.exception('Weather job failed')
+        return 'Weather job failed'
 
 
 if __name__ == '__main__':

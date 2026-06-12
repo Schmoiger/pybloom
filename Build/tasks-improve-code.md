@@ -89,6 +89,7 @@ Database connections are opened and closed manually in multiple places. That is 
 ---
 
 ### 2.2 Add basic error handling around external calls
+✅ DONE
 
 **Files:** `pybloom.py`
 
