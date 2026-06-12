@@ -12,11 +12,23 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 if not hasattr(ast, 'Str'):
-    class _CompatStr(ast.AST):
+    class _CompatStr(ast.Constant):
         _fields = ('s',)
+        _attributes = ('lineno', 'col_offset', 'end_lineno', 'end_col_offset')
+
+        def __new__(cls, s=''):
+            return ast.Constant.__new__(cls, s)
 
         def __init__(self, s=''):
-            self.s = s
+            super().__init__(value=s)
+
+        @property
+        def s(self):
+            return self.value
+
+        @s.setter
+        def s(self, value):
+            self.value = value
 
     ast.Str = _CompatStr
 
@@ -70,6 +82,45 @@ if 'pygal' not in sys.modules:
     pygal_style_stub.Style = _Style
     sys.modules['pygal'] = pygal_stub
     sys.modules['pygal.style'] = pygal_style_stub
+
+if 'pkg_resources' not in sys.modules:
+    pkg_resources_stub = types.ModuleType('pkg_resources')
+
+    class DistributionNotFound(Exception):
+        pass
+
+    def get_distribution(name):
+        raise DistributionNotFound(name)
+
+    def iter_entry_points(group, name=None):
+        return iter(())
+
+    pkg_resources_stub.DistributionNotFound = DistributionNotFound
+    pkg_resources_stub.get_distribution = get_distribution
+    pkg_resources_stub.iter_entry_points = iter_entry_points
+    sys.modules['pkg_resources'] = pkg_resources_stub
+
+if 'apscheduler' not in sys.modules:
+    apscheduler_stub = types.ModuleType('apscheduler')
+    schedulers_stub = types.ModuleType('apscheduler.schedulers')
+    background_stub = types.ModuleType('apscheduler.schedulers.background')
+
+    class BackgroundScheduler:
+        def __init__(self, *args, **kwargs):
+            self.jobs = []
+
+        def add_job(self, *args, **kwargs):
+            self.jobs.append((args, kwargs))
+
+        def start(self):
+            return None
+
+    background_stub.BackgroundScheduler = BackgroundScheduler
+    schedulers_stub.background = background_stub
+    apscheduler_stub.schedulers = schedulers_stub
+    sys.modules['apscheduler'] = apscheduler_stub
+    sys.modules['apscheduler.schedulers'] = schedulers_stub
+    sys.modules['apscheduler.schedulers.background'] = background_stub
 
 import db_utils
 
