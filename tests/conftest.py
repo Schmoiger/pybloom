@@ -12,7 +12,13 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 if not hasattr(ast, 'Str'):
-    ast.Str = ast.Constant
+    class _CompatStr(ast.AST):
+        _fields = ('s',)
+
+        def __init__(self, s=''):
+            self.s = s
+
+    ast.Str = _CompatStr
 
 if 'qhue' not in sys.modules:
     qhue_stub = types.ModuleType('qhue')
