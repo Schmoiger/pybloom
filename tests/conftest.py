@@ -102,18 +102,11 @@ def mock_hue(monkeypatch):
     """Stub the Hue bridge used by `HueLamp`."""
     import pybloom
 
-    class FakeLampState:
-        def __init__(self):
-            self.calls = []
-
-        def state(self, **kwargs):
-            self.calls.append(kwargs)
-
     class FakeLights:
         def __getitem__(self, lamp_id):
             class FakeLight:
                 def __init__(self):
-                    self._lamp_state = FakeLampState()
+                    self.calls = []
 
                 def __call__(self):
                     return {
@@ -122,7 +115,7 @@ def mock_hue(monkeypatch):
                     }
 
                 def state(self, **kwargs):
-                    self._lamp_state.state(**kwargs)
+                    self.calls.append(kwargs)
 
             return FakeLight()
 

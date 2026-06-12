@@ -96,6 +96,7 @@ The existing file mixes ad hoc experimentation with a sketch of graph generation
 ## 3. Nice-to-have
 
 ### 3.1 Test the database helpers first
+✅ DONE
 
 **Target:** `db_utils.py`
 
@@ -110,6 +111,7 @@ Good initial tests:
 ---
 
 ### 3.2 Test the pure logic in `pybloom.py`
+✅ DONE
 
 **Target:** `pybloom.py`
 
@@ -126,6 +128,7 @@ These are worth testing before the more integration-heavy pieces.
 ---
 
 ### 3.3 Test the orchestration path with mocks
+✅ DONE
 
 **Target:** `weather()`
 
@@ -141,6 +144,7 @@ This is enough to protect the top-level workflow without brittle integration tes
 ---
 
 ### 3.4 Test the Flask routes lightly
+✅ DONE
 
 **Targets:** `app/routes.py`, templates
 
