@@ -56,6 +56,7 @@ This is the part most likely to affect network code indirectly, so it should be 
 ---
 
 ### 2.3 Scheduler and timezone support
+✅ DONE
 
 **Libraries:** `APScheduler`, `tzlocal`, `pytz`
 
@@ -87,6 +88,8 @@ These are probably straightforward upgrades, but they should still be validated 
 ---
 
 ### 3.2 Dependencies That Look Unnecessary
+✅ DONE
+
 
 ### 3.2.1 `geojson`
 
