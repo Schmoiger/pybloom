@@ -473,7 +473,7 @@ Verbose status is easier to access (although it isn’t really that verbose).
 
 return 'Fetched new observation'
 
-Whilst this function doesn’t need to return anything, as all it does is to fetch a new observation, it’s good practice to aid debugging to return a string. This way, the command print(observation.new()) returns an acknowledgement if successful.
+Whilst this function doesn’t need to return anything, as all it does is to fetch a new observation, it’s good practice to aid debugging to return a string. This way, the command print(observation.fetch()) returns an acknowledgement if successful.
 
 Log an observation
 
@@ -1125,7 +1125,7 @@ I’ve wrapped the orchestration in another function, called weather. This gives
 def weather():  
     \# Check current weather  
     observation \= weather\_observation()  
-    observation.new(HOME\_LOCATION)  
+    observation.fetch(HOME\_LOCATION)  
     \# observation.set(datetime.now().strftime(DATETIME\_STRING), 23, 'dummy observation')  
     print(observation)
 

@@ -65,6 +65,7 @@ Why this matters:
 ---
 
 ### 1.5 `WeatherObservation.new()` is misleadingly named
+✅ DONE
 
 **File:** `pybloom.py`
 

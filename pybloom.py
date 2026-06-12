@@ -57,7 +57,7 @@ class WeatherObservation:
     def __str__(self):
         return f'Current weather: {self.detailed_status}, {self.temperature} celsius (made at {self.timestamp})'
 
-    def new(self, location):  # expect e.g. 'London, GB'
+    def fetch(self, location):  # expect e.g. 'London, GB'
         owm = pyowm.OWM(OWM_KEY)
         mgr = owm.weather_manager()
         weather_reading = mgr.weather_at_place(location).weather
@@ -269,7 +269,7 @@ hue_lamp_ids = {
 def weather():
     # Check current weather
     observation = WeatherObservation()
-    observation.new(HOME_LOCATION)
+    observation.fetch(HOME_LOCATION)
     print(observation)
 
     # Set lounge bloom to current temperature
