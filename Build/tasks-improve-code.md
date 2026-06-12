@@ -34,6 +34,7 @@ The trailing commas on `timestamp` and `temperature` create single-item tuples i
 ---
 
 ### 1.3 `get_rows()` has broken error handling
+✅ DONE
 
 **File:** `db_utils.py`
 

@@ -67,19 +67,20 @@ def get_rows(table, columns='*', **kwargs):
         con.row_factory = sqlite3.Row
         cur = con.cursor()  # instantiate a cursor obj
 
-        rows_sql = ''
-        args = ()
-        for key, value in kwargs.items():
-            if key == 'rows_sql':
-                rows_sql = ' ' + value
-            elif key == 'args':
-                args = value
-        if rows_sql.count('?') != len(args):
-            results = 'Unexpected number of arguments in row modifier'
+        try:
+            rows_sql = ''
+            args = ()
+            for key, value in kwargs.items():
+                if key == 'rows_sql':
+                    rows_sql = ' ' + value
+                elif key == 'args':
+                    args = value
+            if rows_sql.count('?') != len(args):
+                raise ValueError('Unexpected number of arguments in row modifier')
 
-        cur.execute('SELECT ' + columns + ' FROM ' + table + rows_sql, args)
-        results = cur.fetchall()
+            cur.execute('SELECT ' + columns + ' FROM ' + table + rows_sql, args)
+            return cur.fetchall()
+        finally:
+            con.close()  # close connection
     else:
-        results = 'invalid table name'
-    con.close()  # close connection
-    return results
+        raise ValueError('invalid table name')
