@@ -21,6 +21,7 @@ Why this matters:
 ---
 
 ### 1.2 The code is not yet test-friendly
+✅ DONE
 
 **Files:** `db_utils.py`, `pybloom.py`, `app/__init__.py`
 
@@ -35,6 +36,7 @@ Why this matters:
 ---
 
 ### 1.3 `colours.html` indexes rows by position
+✅ DONE
 
 **File:** `app/templates/colours.html`
 
@@ -170,4 +172,3 @@ These were in the original plan, but they are too much for this project at this 
 - adding fixtures for every possible dependency combination
 
 Those ideas are valid in larger projects, but they would add more setup cost than value here. Start with a small, reliable suite and expand it only where you actually feel pain.
-

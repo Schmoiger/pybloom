@@ -11,8 +11,8 @@
       </tr>
       {% for row in rows %}
       <tr>
-        <td>{{row[1]}}</td>
-        <td id="{{row[2]}}">{{row[2]}}</td>
+        <td>{{ row['temperature'] }}</td>
+        <td id="{{ row['hex_value'] }}">{{ row['hex_value'] }}</td>
       </tr>
       {% endfor %}
     </table>
@@ -24,7 +24,7 @@
   <script>
     "use strict";
     {% for row in rows %}
-      document.getElementById("{{row[2]}}").style.background = "#"+"{{row[2]}}";
+      document.getElementById("{{ row['hex_value'] }}").style.background = "#{{ row['hex_value'] }}";
     {% endfor %}
   </script>
 {% endblock %}
