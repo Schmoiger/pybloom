@@ -71,16 +71,18 @@ class WeatherObservation:
         con = db_connect()
         cur = con.cursor()
 
-        sql = '''INSERT INTO observations (timestamp,
-                                           temperature,
-                                           detailed_status)
-                 VALUES (?, ?, ?)'''
-        cur.execute(sql, (self.timestamp,
-                          self.temperature,
-                          self.detailed_status))
-        con.commit()
-        con.close()
-        return 'Observation logged'
+        try:
+            sql = '''INSERT INTO observations (timestamp,
+                                               temperature,
+                                               detailed_status)
+                     VALUES (?, ?, ?)'''
+            cur.execute(sql, (self.timestamp,
+                              self.temperature,
+                              self.detailed_status))
+            con.commit()
+            return 'Observation logged'
+        finally:
+            con.close()
 
     def set(self, timestamp, temperature, detailed_status):  # for debug
         self.timestamp = timestamp
