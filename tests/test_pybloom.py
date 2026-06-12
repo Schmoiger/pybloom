@@ -20,7 +20,7 @@ def test_lookup_colour_returns_matching_hex(monkeypatch):
     monkeypatch.setattr(
         pybloom,
         'get_rows',
-        lambda table, columns='*', **kwargs: [{'hex_value': 'ffbf00'}],
+        lambda table, columns='*', **kwargs: [('ffbf00',)],
     )
 
     assert pybloom.lookup_colour(25) == 'ffbf00'
