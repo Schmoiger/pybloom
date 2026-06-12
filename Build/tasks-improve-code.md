@@ -115,6 +115,7 @@ The code prints to stdout instead of using the logging module. On the Pi, loggin
 ---
 
 ### 2.4 `temps_count` should be reset per graph period
+✅ DONE
 
 **File:** `pybloom.py`
 
@@ -147,6 +148,7 @@ The light is turned on and then recoloured in separate calls.
 ---
 
 ### 2.7 `COLOURS_TABLE` is loaded once at import time
+WON'T FIX - Colours are static
 
 **File:** `app/routes.py`
 

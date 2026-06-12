@@ -188,10 +188,11 @@ def generate_graphs(timestamp):
     # get datapoints from database
     rows = get_rows('colours')
     hex_list = [f'#{hex_string}' for hex_string in [row['hex_value'] for row in rows]]
-    temps_count = {row['temperature']: 0 for row in rows}
 
     # graphs for every reading in last day, week, month
     for string, then in observation_sets.items():
+        temps_count = {row['temperature']: 0 for row in rows}
+
         # fetch data
         sql = 'WHERE timestamp BETWEEN datetime((?)) AND datetime((?))'
         when = (then, now)
