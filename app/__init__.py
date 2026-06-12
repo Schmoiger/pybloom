@@ -57,6 +57,8 @@ if 'urllib3.packages.six.moves.http_client' not in sys.modules:
     http_client_mod.HTTPConnection = http_client.HTTPConnection
     http_client_mod.HTTPResponse = http_client.HTTPResponse
     http_client_mod.HTTPException = http_client.HTTPException
+    six_mod.b = lambda value: value.encode('latin1') if isinstance(value, str) else value
+    six_mod.integer_types = (int,)
     moves_mod.http_client = http_client_mod
     six_mod.moves = moves_mod
     packages_mod.six = six_mod
@@ -95,10 +97,20 @@ from apscheduler.schedulers.background import BackgroundScheduler
 schedule = BackgroundScheduler(daemon=True)
 
 
-@app.before_first_request
 def start_scheduler():
-    from datetime import datetime
-    from pybloom import weather
+    def run_weather():
+        from pybloom import weather
 
-    schedule.add_job(lambda: weather(), 'interval', minutes=10, next_run_time=datetime.now())
+        weather()
+
+    if getattr(schedule, 'running', False):
+        return
+
+    from datetime import datetime
+    from apscheduler.triggers.interval import IntervalTrigger
+
+    schedule.add_job(run_weather, trigger=IntervalTrigger(minutes=10, start_date=datetime.now()))
     schedule.start()
+
+
+start_scheduler()

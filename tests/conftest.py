@@ -105,6 +105,8 @@ if 'apscheduler' not in sys.modules:
     apscheduler_stub = types.ModuleType('apscheduler')
     schedulers_stub = types.ModuleType('apscheduler.schedulers')
     background_stub = types.ModuleType('apscheduler.schedulers.background')
+    triggers_stub = types.ModuleType('apscheduler.triggers')
+    interval_stub = types.ModuleType('apscheduler.triggers.interval')
 
     class BackgroundScheduler:
         def __init__(self, *args, **kwargs):
@@ -116,12 +118,22 @@ if 'apscheduler' not in sys.modules:
         def start(self):
             return None
 
+    class IntervalTrigger:
+        def __init__(self, *args, **kwargs):
+            self.args = args
+            self.kwargs = kwargs
+
     background_stub.BackgroundScheduler = BackgroundScheduler
+    interval_stub.IntervalTrigger = IntervalTrigger
     schedulers_stub.background = background_stub
+    triggers_stub.interval = interval_stub
     apscheduler_stub.schedulers = schedulers_stub
+    apscheduler_stub.triggers = triggers_stub
     sys.modules['apscheduler'] = apscheduler_stub
     sys.modules['apscheduler.schedulers'] = schedulers_stub
     sys.modules['apscheduler.schedulers.background'] = background_stub
+    sys.modules['apscheduler.triggers'] = triggers_stub
+    sys.modules['apscheduler.triggers.interval'] = interval_stub
 
 import db_utils
 
