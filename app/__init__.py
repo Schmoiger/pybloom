@@ -97,7 +97,8 @@ schedule = BackgroundScheduler(daemon=True)
 
 @app.before_first_request
 def start_scheduler():
+    from datetime import datetime
     from pybloom import weather
 
-    schedule.add_job(lambda: weather(), 'interval', minutes=10)
+    schedule.add_job(lambda: weather(), 'interval', minutes=10, next_run_time=datetime.now())
     schedule.start()
