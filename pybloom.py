@@ -304,7 +304,7 @@ def weather():
         # Check current weather
         observation = WeatherObservation()
         observation.fetch(HOME_LOCATION)
-        print(observation)
+        logger.info('%s', observation)
 
         # Set lounge bloom to current temperature
         lounge_bloom = HueLamp(hue_lamp_ids['lounge bloom'])

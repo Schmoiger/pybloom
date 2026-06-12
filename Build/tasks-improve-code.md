@@ -104,12 +104,13 @@ Why this matters:
 ---
 
 ### 2.3 Replace `print()` with logging
+✅ DONE
 
 **File:** `pybloom.py`
 
-The code prints to stdout instead of using the logging module.
+The code prints to stdout instead of using the logging module. On the Pi, logging to the console still gives visible feedback, so this is about routing status messages through `logging`, not hiding them.
 
-**Recommendation:** Use Python `logging` with a simple configuration. No need for a complex logging stack; just make failures and job progress visible.
+**Recommendation:** Use Python `logging` with a simple console configuration. No need for a complex logging stack; just make failures and job progress visible.
 
 ---
 
