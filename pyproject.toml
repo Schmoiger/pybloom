@@ -5,7 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
-    "apscheduler==3.11.1",
+    "apscheduler==3.11.2",
     "blinker==1.9.0",
     "click==8.2.1",
     "flask==3.1.1",
@@ -24,8 +24,7 @@ dependencies = [
     "urllib3==2.3.0",
     "certifi==2025.1.31",
     "idna==3.10",
-    "pytz==2025.2",
-    "tzlocal==5.3.1",
+    "setuptools<82",
 ]
 
 [tool.pytest.ini_options]
