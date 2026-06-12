@@ -50,8 +50,8 @@ HOME_LOCATION = credentials.credentials['home_location']
 class WeatherObservation:
 
     def __init__(self, timestamp=None, temperature=None, detailed_status=None):
-        self.timestamp = timestamp,
-        self.temperature = temperature,
+        self.timestamp = timestamp
+        self.temperature = temperature
         self.detailed_status = detailed_status
 
     def __str__(self):

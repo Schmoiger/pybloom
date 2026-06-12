@@ -23,6 +23,7 @@ Why this matters:
 ---
 
 ### 1.2 `WeatherObservation.__init__` has a real bug
+✅ DONE
 
 **File:** `pybloom.py`
 
