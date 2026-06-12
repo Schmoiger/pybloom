@@ -1,33 +1,14 @@
-import os
-import sys
-
 import pytest
-
-
-CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
-PARENT_DIR = os.path.dirname(CURRENT_DIR)
-sys.path.append(PARENT_DIR)
 
 import db_utils
 import pybloom
 
 
-def test_find_temp_threshold_clamps_to_database_bounds(monkeypatch):
+def test_find_temp_threshold_clamps_to_database_bounds(monkeypatch, colour_threshold_rows):
     monkeypatch.setattr(
         pybloom,
         'get_rows',
-        lambda table, columns='*', **kwargs: [
-            {'temperature': -15},
-            {'temperature': 0},
-            {'temperature': 5},
-            {'temperature': 10},
-            {'temperature': 15},
-            {'temperature': 20},
-            {'temperature': 25},
-            {'temperature': 30},
-            {'temperature': 35},
-            {'temperature': 40},
-        ],
+        lambda table, columns='*', **kwargs: colour_threshold_rows,
     )
 
     assert pybloom.find_temp_threshold(-99) == -15
@@ -64,3 +45,15 @@ def test_weather_observation_set_and_str():
 def test_get_rows_rejects_invalid_table():
     with pytest.raises(ValueError, match='invalid table name'):
         db_utils.get_rows('not_a_table')
+
+
+def test_home_route_renders(flask_client):
+    response = flask_client.get('/')
+
+    assert response.status_code == 200
+
+
+def test_colours_route_renders(flask_client):
+    response = flask_client.get('/colours')
+
+    assert response.status_code == 200

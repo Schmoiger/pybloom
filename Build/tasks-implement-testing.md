@@ -50,6 +50,7 @@ The template uses `row[1]` and `row[2]` rather than named access. That is brittl
 ## 2. Cleanup
 
 ### 2.1 Add `pytest` and coverage support
+✅ DONE
 
 **File:** `pyproject.toml`
 
@@ -65,6 +66,7 @@ Do not lock yourself into a 95% coverage target at the start. That is the wrong 
 ---
 
 ### 2.2 Add a small fixture set
+✅ DONE
 
 **Files:** `tests/conftest.py`
 
@@ -81,6 +83,7 @@ You only need a few reusable fixtures:
 ---
 
 ### 2.3 Split exploratory code out of `tests/test.py`
+✅ DONE
 
 **File:** `tests/test.py`
 
