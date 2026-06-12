@@ -159,6 +159,7 @@ The colours table is read once when the module is imported. If the database chan
 ---
 
 ### 2.8 Bootstrap navbar markup is mismatched with the included version
+✅ DONE
 
 **File:** `app/templates/base.html`
 
