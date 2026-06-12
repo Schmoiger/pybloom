@@ -25,6 +25,7 @@ What I would not claim:
 ## 2. Cleanup
 
 ### 2.1 Core web stack
+✅ DONE
 
 **Libraries:** `Flask`, `Werkzeug`, `Jinja2`, `click`, `itsdangerous`, `MarkupSafe`
 
@@ -40,6 +41,7 @@ This is the main compatibility cluster in the project.
 ---
 
 ### 2.2 HTTP stack
+✅ DONE
 
 **Libraries:** `requests`, `urllib3`, `certifi`, `idna`
 
