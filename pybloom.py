@@ -133,8 +133,7 @@ class HueLamp:
 
     def set_colour(self, colour):  # colour is a tuple of xy values
         try:
-            self.setter.state(on=True)
-            self.setter.state(xy=colour)
+            self.setter.state(on=True, xy=colour)
             return 'Lamp changed colour'
         except Exception:
             logger.exception('Failed to set lamp colour to %s', colour)

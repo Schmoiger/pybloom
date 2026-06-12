@@ -136,6 +136,7 @@ If the database returns no matching row, `results[0]` raises `IndexError`.
 ---
 
 ### 2.6 `HueLamp.set_colour()` makes two API calls
+✅ DONE
 
 **File:** `pybloom.py`
 
