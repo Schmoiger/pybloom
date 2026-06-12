@@ -1,5 +1,9 @@
 from flask import Flask
 app = Flask(__name__)
+from db_utils import init_db
+
+init_db()
+
 from app import routes
 from apscheduler.schedulers.background import BackgroundScheduler
 from pybloom import weather

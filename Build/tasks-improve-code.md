@@ -7,6 +7,7 @@ Pragmatic review of the PyBloom codebase, focused on fixes that are worth doing 
 ## 1. Bugs
 
 ### 1.1 Module-level side effects in `db_utils.py`
+✅ DONE
 
 **File:** `db_utils.py`
 
