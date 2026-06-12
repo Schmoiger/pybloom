@@ -7,6 +7,7 @@ Pragmatic plan for adding tests to PyBloom. The goal is to cover the parts that 
 ## 1. Bugs
 
 ### 1.1 `tests/test.py` is not a real test suite
+✅ DONE
 
 **File:** `tests/test.py`
 
