@@ -201,6 +201,7 @@ The temperature thresholds are read from the database each time the helper is ca
 ---
 
 ### 3.2 Imports inside `generate_graphs()`
+✅ DONE
 
 **File:** `pybloom.py`
 

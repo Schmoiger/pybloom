@@ -31,9 +31,12 @@ Notes:
 
 from datetime import datetime, timedelta
 import logging
+from statistics import mean
+
 import qhue
 from rgbxy import Converter
 from rgbxy import GamutA
+from dateutil.relativedelta import relativedelta
 import pyowm
 import pygal
 from pygal.style import Style
@@ -248,10 +251,6 @@ def generate_graphs(timestamp):
         except Exception:
             logger.exception('Failed to render radar chart %s', filename)
             raise
-
-    # calculate values for annual graph
-    from statistics import mean
-    from dateutil.relativedelta import relativedelta
 
     month_name = {1: 'Jan', 2: 'Feb', 3: 'Mar', 4: 'Apr', 5: 'May', 6: 'Jun', 7: 'Jul', 8: 'Aug', 9: 'Sep', 10: 'Oct',
                   11: 'Nov', 12: 'Dec'}
