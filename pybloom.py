@@ -146,6 +146,8 @@ def lookup_colour(temperature):
     sql = 'WHERE temperature = (?)'
     what = (temperature,)  # tuple with single item
     results = get_rows('colours', 'hex_value', rows_sql=sql, args=what)
+    if not results:
+        raise ValueError(f'No colour found for temperature threshold {temperature}')
     return results[0][0]  # to return the hex value string only
 
 

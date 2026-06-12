@@ -125,6 +125,7 @@ The pie chart counts are accumulated across iterations of the loop, so later gra
 ---
 
 ### 2.5 `lookup_colour()` assumes data always exists
+✅ DONE
 
 **File:** `pybloom.py`
 
