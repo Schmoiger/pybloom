@@ -10,5 +10,9 @@ from pybloom import weather
 
 
 schedule = BackgroundScheduler(daemon=True)
-schedule.add_job(lambda: weather(), 'interval', minutes=10)
-schedule.start()
+
+
+@app.before_serving
+def start_scheduler():
+    schedule.add_job(lambda: weather(), 'interval', minutes=10)
+    schedule.start()

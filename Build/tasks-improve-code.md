@@ -47,6 +47,7 @@ Why this matters:
 ---
 
 ### 1.4 Scheduler startup happens at import time
+✅ DONE
 
 **File:** `app/__init__.py`
 
