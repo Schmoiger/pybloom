@@ -1,4 +1,5 @@
 import sqlite3
+import types
 import sys
 from pathlib import Path
 
@@ -8,6 +9,57 @@ import pytest
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
+
+if 'qhue' not in sys.modules:
+    qhue_stub = types.ModuleType('qhue')
+
+    class _Bridge:
+        def __init__(self, *args, **kwargs):
+            self.lights = {}
+
+    qhue_stub.Bridge = _Bridge
+    sys.modules['qhue'] = qhue_stub
+
+if 'pyowm' not in sys.modules:
+    pyowm_stub = types.ModuleType('pyowm')
+
+    class _OWM:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def weather_manager(self):
+            raise RuntimeError('pyowm stub should be monkeypatched in tests')
+
+    pyowm_stub.OWM = _OWM
+    sys.modules['pyowm'] = pyowm_stub
+
+if 'pygal' not in sys.modules:
+    pygal_stub = types.ModuleType('pygal')
+
+    class _Chart:
+        def __init__(self, *args, **kwargs):
+            self.series = []
+            self.x_labels = []
+
+        def add(self, *args, **kwargs):
+            self.series.append((args, kwargs))
+
+        def render_to_file(self, *args, **kwargs):
+            return None
+
+    class _Style:
+        def __init__(self, *args, **kwargs):
+            self.args = args
+            self.kwargs = kwargs
+
+    pygal_stub.Bar = _Chart
+    pygal_stub.Pie = _Chart
+    pygal_stub.Radar = _Chart
+    pygal_stub.Box = _Chart
+    pygal_style_stub = types.ModuleType('pygal.style')
+    pygal_style_stub.Style = _Style
+    sys.modules['pygal'] = pygal_stub
+    sys.modules['pygal.style'] = pygal_style_stub
 
 import db_utils
 
