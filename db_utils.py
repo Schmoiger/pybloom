@@ -1,18 +1,20 @@
-'''
-Create sqlite3 database containing two tables. Pre-populate Hue colours db.
-'''
+"""SQLite database helpers for schema setup and row retrieval."""
 
 import sqlite3
+from collections.abc import Sequence
+from typing import Any
+
 DEFAULT_DB = 'database.sqlite3'
 
 
-def db_connect(db_file=DEFAULT_DB):
-    # create connection to SQLite database
+def db_connect(db_file: str = DEFAULT_DB) -> sqlite3.Connection:
+    """Create a SQLite connection for the configured database file."""
     connection = sqlite3.connect(db_file)
     return connection
 
 
-def init_db(db_file=DEFAULT_DB):
+def init_db(db_file: str = DEFAULT_DB) -> None:
+    """Create tables and seed default colour thresholds."""
     con = db_connect(db_file)
     cur = con.cursor()
 
@@ -60,16 +62,25 @@ def init_db(db_file=DEFAULT_DB):
         con.close()
 
 
-def get_rows(table, columns='*', **kwargs):
-    # columns_names should be a string enclosing a tuple of selected columns
+def get_rows(
+    table: str,
+    columns: str = '*',
+    **kwargs: Any,
+) -> list[sqlite3.Row]:
+    """Return rows from a known table.
+
+    Optional kwargs:
+    - rows_sql: additional SQL fragment beginning with WHERE/ORDER BY
+    - args: sequence of query parameters for the fragment
+    """
     if (table == 'colours') or (table == 'observations'):
-        con = db_connect()  # connect to the database
+        con = db_connect()
         con.row_factory = sqlite3.Row
-        cur = con.cursor()  # instantiate a cursor obj
+        cur = con.cursor()
 
         try:
             rows_sql = ''
-            args = ()
+            args: Sequence[Any] = ()
             for key, value in kwargs.items():
                 if key == 'rows_sql':
                     rows_sql = ' ' + value
@@ -81,6 +92,6 @@ def get_rows(table, columns='*', **kwargs):
             cur.execute('SELECT ' + columns + ' FROM ' + table + rows_sql, args)
             return cur.fetchall()
         finally:
-            con.close()  # close connection
+            con.close()
     else:
         raise ValueError('invalid table name')

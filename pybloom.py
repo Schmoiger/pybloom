@@ -54,16 +54,22 @@ HOME_LOCATION = credentials.credentials['home_location']
 
 
 class WeatherObservation:
+    """Current weather observation fetched from OpenWeatherMap."""
 
-    def __init__(self, timestamp=None, temperature=None, detailed_status=None):
+    def __init__(
+        self,
+        timestamp: str | None = None,
+        temperature: float | None = None,
+        detailed_status: str | None = None,
+    ) -> None:
         self.timestamp = timestamp
         self.temperature = temperature
         self.detailed_status = detailed_status
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f'Current weather: {self.detailed_status}, {self.temperature} celsius (made at {self.timestamp})'
 
-    def fetch(self, location):  # expect e.g. 'London, GB'
+    def fetch(self, location: str) -> str:  # expect e.g. 'London, GB'
         try:
             owm = pyowm.OWM(OWM_KEY)
             mgr = owm.weather_manager()
@@ -76,8 +82,7 @@ class WeatherObservation:
             logger.exception('Failed to fetch weather for %s', location)
             raise
 
-    def log(self):
-        # write to external database
+    def log(self) -> str:
         con = db_connect()
         cur = con.cursor()
 
@@ -94,7 +99,7 @@ class WeatherObservation:
         finally:
             con.close()
 
-    def set(self, timestamp, temperature, detailed_status):  # for debug
+    def set(self, timestamp: str, temperature: float, detailed_status: str) -> str:  # for debug
         self.timestamp = timestamp
         self.temperature = temperature
         self.detailed_status = detailed_status
@@ -102,13 +107,12 @@ class WeatherObservation:
 
 
 class HueLamp:
+    """Thin wrapper around a single Hue light."""
 
-    def __init__(self, lamp_id):
+    def __init__(self, lamp_id: int) -> None:
         try:
-            # not accessible
             ip = HUE_IP
             username = HUE_USERNAME
-            # accessible
             self.bridge = qhue.Bridge(ip, username)
             self.getter = self.bridge.lights[lamp_id]()
             self.setter = self.bridge.lights[lamp_id]
@@ -119,22 +123,22 @@ class HueLamp:
             logger.exception('Failed to initialise Hue lamp %s', lamp_id)
             raise
 
-    def __str__(self):
+    def __str__(self) -> str:
         if self.is_on:
             status = 'on and is set to xy:' + str(self.colour)
         else:
             status = 'off'
         return f'{self.name} is {status}'
 
-    def turn_on(self):
+    def turn_on(self) -> str:
         self.setter.state(on=True)
         return 'Lamp turned on'
 
-    def turn_off(self):
+    def turn_off(self) -> str:
         self.setter.state(on=False)
         return 'Lamp turned off'
 
-    def set_colour(self, colour):  # colour is a tuple of xy values
+    def set_colour(self, colour: tuple[float, float]) -> str:  # colour is a tuple of xy values
         try:
             self.setter.state(on=True, xy=colour)
             return 'Lamp changed colour'
@@ -143,7 +147,7 @@ class HueLamp:
             raise
 
 
-def lookup_colour(temperature):
+def lookup_colour(temperature: int) -> str:
     # lookup table of temperatures to colours in database.sqlite3
     sql = 'WHERE temperature = (?)'
     what = (temperature,)  # tuple with single item
@@ -153,7 +157,7 @@ def lookup_colour(temperature):
     return results[0][0]  # to return the hex value string only
 
 
-def find_temp_threshold(temp):
+def find_temp_threshold(temp: float) -> int:
     # find max and min thresholds from external database
     rows = get_rows('colours')
 
@@ -169,14 +173,14 @@ def find_temp_threshold(temp):
     return temp_threshold
 
 
-def convert_temp_to_colour(temp):
+def convert_temp_to_colour(temp: float) -> tuple[float, float]:
     temp_threshold = find_temp_threshold(temp)
     converter = Converter(GamutA)
     colour = converter.hex_to_xy(lookup_colour(temp_threshold))
     return colour
 
 
-def generate_graphs(timestamp):
+def generate_graphs(timestamp: str) -> str:
     # observation sets
     now = datetime.strptime(timestamp, DATETIME_STRING)
     last_day = now - timedelta(days=1)
@@ -189,21 +193,21 @@ def generate_graphs(timestamp):
     }
 
     # get datapoints from database
-    rows = get_rows('colours')
-    hex_list = [f'#{hex_string}' for hex_string in [row['hex_value'] for row in rows]]
+    colour_rows = get_rows('colours')
+    hex_list = [f'#{row["hex_value"]}' for row in colour_rows]
 
     # graphs for every reading in last day, week, month
     for string, then in observation_sets.items():
-        temps_count = {row['temperature']: 0 for row in rows}
+        temps_count = {row['temperature']: 0 for row in colour_rows}
 
         # fetch data
         sql = 'WHERE timestamp BETWEEN datetime((?)) AND datetime((?))'
         when = (then, now)
-        rows = get_rows('observations', rows_sql=sql, args=when)
+        observation_rows = get_rows('observations', rows_sql=sql, args=when)
 
         # generate bar graph
-        times = [row['timestamp'] for row in rows]
-        temps = [row['temperature'] for row in rows]
+        times = [row['timestamp'] for row in observation_rows]
+        temps = [row['temperature'] for row in observation_rows]
 
         bar_chart = pygal.Bar(x_label_rotation=20,
                               x_labels_major_count=6,
@@ -300,7 +304,7 @@ hue_lamp_ids = {
 }
 
 
-def weather():
+def weather() -> str:
     try:
         # Check current weather
         observation = WeatherObservation()

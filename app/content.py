@@ -1,20 +1,20 @@
-'''
-Rudimentary content management script
-'''
+"""Small content helpers for templates."""
+
+from typing import Any
 
 from db_utils import get_rows
 
 
-def graphs():
-    all_graphs = {
+def graphs() -> dict[str, str]:
+    """Return the static graph filenames used by the dashboard."""
+    return {
         'lastday': 'last_day_radar.svg',
         'lastweek': 'last_week_bar.svg',
         'lastmonth': 'last_month_pie.svg',
         'lastyear': 'annual_box.svg'
     }
-    return all_graphs
 
 
-def colours_table():
-    rows = get_rows('colours')
-    return rows
+def colours_table() -> list[Any]:
+    """Return the colour mapping rows for the colours page."""
+    return get_rows('colours')

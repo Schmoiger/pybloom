@@ -229,6 +229,8 @@ The code has very few type hints and only sparse docstrings.
 
 **Recommendation:** Add type hints and short docstrings where they help readability. Do not force a full typing pass if it slows you down more than it helps.
 
+✅ DONE: Added module docstrings and focused type hints to the public helpers, Flask routes, and the weather/Hue classes.
+
 ---
 
 ### 3.5 Formal migrations and health endpoints
