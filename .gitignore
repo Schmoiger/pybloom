@@ -11,6 +11,7 @@
 
 # API keys, passwords, and private credentials
 credentials.*
+mcp.json
 
 # Environment variables file
 .env
