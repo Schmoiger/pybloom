@@ -31,6 +31,7 @@ Notes:
 from datetime import datetime, timedelta
 import logging
 from statistics import mean
+from typing import TypedDict, cast
 
 import qhue
 from rgbxy import Converter
@@ -43,6 +44,16 @@ from db_utils import db_connect, get_rows
 import credentials
 
 logger = logging.getLogger(__name__)
+
+
+class HueLampState(TypedDict):
+    on: bool
+    xy: tuple[float, float]
+
+
+class HueLampData(TypedDict):
+    state: HueLampState
+    name: str
 
 DATETIME_STRING = '%Y-%m-%d %H:%M:%S'
 FILEPATH = './app/static/'
@@ -72,7 +83,12 @@ class WeatherObservation:
         try:
             owm = pyowm.OWM(OWM_KEY)
             mgr = owm.weather_manager()
-            weather_reading = mgr.weather_at_place(location).weather
+            observation = mgr.weather_at_place(location)
+            if observation is None:
+                raise RuntimeError(f'No observation returned for {location}')
+            weather_reading = observation.weather
+            if weather_reading is None:
+                raise RuntimeError(f'No weather reading returned for {location}')
             self.timestamp = datetime.now().strftime(DATETIME_STRING)
             self.temperature = weather_reading.temperature('celsius')['temp']
             self.detailed_status = weather_reading.detailed_status
@@ -113,7 +129,7 @@ class HueLamp:
             ip = HUE_IP
             username = HUE_USERNAME
             self.bridge = qhue.Bridge(ip, username)
-            self.getter = self.bridge.lights[lamp_id]()
+            self.getter = cast(HueLampData, self.bridge.lights[lamp_id]())
             self.setter = self.bridge.lights[lamp_id]
             self.is_on = self.getter['state']['on']
             self.colour = self.getter['state']['xy']
@@ -315,6 +331,8 @@ def weather() -> str:
 
         # Set lounge bloom to current temperature
         lounge_bloom = HueLamp(hue_lamp_ids['lounge bloom'])
+        if observation.temperature is None:
+            raise RuntimeError('Observation temperature was not set')
         lounge_bloom.set_colour(convert_temp_to_colour(observation.temperature))
         # Set den bloom to current temperature
         den_bloom = HueLamp(hue_lamp_ids['den bloom'])
@@ -324,6 +342,8 @@ def weather() -> str:
         observation.log()
 
         # generate new graphs
+        if observation.timestamp is None:
+            raise RuntimeError('Observation timestamp was not set')
         generate_graphs(observation.timestamp)
 
         return 'Fetched weather'
