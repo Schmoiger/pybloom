@@ -34,14 +34,14 @@
         </span>
 
         <!-- Toggle Button [handles opening navbar components on mobile screens] -->
-        <button type="button" class="navbar-toggler" data-toggle="collapse" data-target="navbarNavItems" aria-expanded"false">
+        <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbarNavItems" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
 
         <!-- Navbar Collapse [contains all other navbar components] -->
         <div class="collapse navbar-collapse" id="navbarNavItems">
           <!-- Navbar Menu -->
-          <div class="navbar-nav mr-auto">
+          <div class="navbar-nav me-auto">
             <li class="nav-item">
               <a class="nav-link" href="{{ url_for('index') }}">Weather Station</a>
             </li>
@@ -50,7 +50,7 @@
             </li>
           </div>
           <!-- a plug for my blog! -->
-          <div class="navbar-nav navbar-right">
+          <div class="navbar-nav">
             <img src="{{ url_for('static', filename='MindRocketLogo.png') }}" height="30" class="d-inline-block align-top" alt="M:nd Rocket_">
             <li class="nav-item">
               <a class="nav-link" href="https://blog.mindrocketnow.com">Home</a>

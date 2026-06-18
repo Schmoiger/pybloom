@@ -1,11 +1,58 @@
-# created by virtualenv automatically
+# ==============================================================================
+# 1. PROJECT DEPENDENCIES & ENVIRONMENTS (UV / Python)
+# ==============================================================================
 
-__pycache__*
-Icon*
-.git
-**/*.DS_Store
-**/*.svg
-*.old
+# Local uv virtual environment folder
+.venv/
+
+# ==============================================================================
+# 2. LOCAL DATA, CONFIGS & SECRETS (Never commit to Git)
+# ==============================================================================
+
+# API keys, passwords, and private credentials
 credentials.*
+mcp.json
+
+# Environment variables file
+.env
+
+# Local environment overrides
+.env.*
+
+# Local runtime database file
 database.sqlite3
+
+# Local application data cache files
 pybloomweather*.json
+
+# ==============================================================================
+# 3. RUNTIME ARTIFACTS & BACKUPS
+# ==============================================================================
+
+# Python compiled bytecode directories
+__pycache__*
+
+# Compiled Python files
+*.py[cod]
+
+# Java-Python bytecode files
+*$py.class
+
+# Leftover backup files
+*.old
+
+# ==============================================================================
+# 4. SYSTEM, DESIGN & OS SPECIFIC FILES
+# ==============================================================================
+
+# macOS directory layout files
+.DS_Store
+
+# Custom macOS folder icons
+Icon*
+
+# Generated vector assets / design exports
+**/*.svg
+
+# Standard Git directory (Redundant but kept)
+.git

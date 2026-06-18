@@ -28,16 +28,21 @@ Notes:
 - Logged data is persistent
 - Using free versions of all API, so there is limit to number of calls
 """
-
 from datetime import datetime, timedelta
+import logging
+from statistics import mean
+
 import qhue
 from rgbxy import Converter
 from rgbxy import GamutA
+from dateutil.relativedelta import relativedelta
 import pyowm
 import pygal
 from pygal.style import Style
 from db_utils import db_connect, get_rows
 import credentials
+
+logger = logging.getLogger(__name__)
 
 DATETIME_STRING = '%Y-%m-%d %H:%M:%S'
 FILEPATH = './app/static/'
@@ -48,41 +53,52 @@ HOME_LOCATION = credentials.credentials['home_location']
 
 
 class WeatherObservation:
+    """Current weather observation fetched from OpenWeatherMap."""
 
-    def __init__(self, timestamp=None, temperature=None, detailed_status=None):
-        self.timestamp = timestamp,
-        self.temperature = temperature,
+    def __init__(
+        self,
+        timestamp: str | None = None,
+        temperature: float | None = None,
+        detailed_status: str | None = None,
+    ) -> None:
+        self.timestamp = timestamp
+        self.temperature = temperature
         self.detailed_status = detailed_status
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f'Current weather: {self.detailed_status}, {self.temperature} celsius (made at {self.timestamp})'
 
-    def new(self, location):  # expect e.g. 'London, GB'
-        owm = pyowm.OWM(OWM_KEY)
-        mgr = owm.weather_manager()
-        weather_reading = mgr.weather_at_place(location).weather
-        self.timestamp = datetime.now().strftime(DATETIME_STRING)
-        self.temperature = weather_reading.temperature('celsius')['temp']
-        self.detailed_status = weather_reading.detailed_status
-        return 'Fetched new observation'
+    def fetch(self, location: str) -> str:  # expect e.g. 'London, GB'
+        try:
+            owm = pyowm.OWM(OWM_KEY)
+            mgr = owm.weather_manager()
+            weather_reading = mgr.weather_at_place(location).weather
+            self.timestamp = datetime.now().strftime(DATETIME_STRING)
+            self.temperature = weather_reading.temperature('celsius')['temp']
+            self.detailed_status = weather_reading.detailed_status
+            return 'Fetched new observation'
+        except Exception:
+            logger.exception('Failed to fetch weather for %s', location)
+            raise
 
-    def log(self):
-        # write to external database
+    def log(self) -> str:
         con = db_connect()
         cur = con.cursor()
 
-        sql = '''INSERT INTO observations (timestamp,
-                                           temperature,
-                                           detailed_status)
-                 VALUES (?, ?, ?)'''
-        cur.execute(sql, (self.timestamp,
-                          self.temperature,
-                          self.detailed_status))
-        con.commit()
-        con.close()
-        return 'Observation logged'
+        try:
+            sql = '''INSERT INTO observations (timestamp,
+                                               temperature,
+                                               detailed_status)
+                     VALUES (?, ?, ?)'''
+            cur.execute(sql, (self.timestamp,
+                              self.temperature,
+                              self.detailed_status))
+            con.commit()
+            return 'Observation logged'
+        finally:
+            con.close()
 
-    def set(self, timestamp, temperature, detailed_status):  # for debug
+    def set(self, timestamp: str, temperature: float, detailed_status: str) -> str:  # for debug
         self.timestamp = timestamp
         self.temperature = temperature
         self.detailed_status = detailed_status
@@ -90,49 +106,57 @@ class WeatherObservation:
 
 
 class HueLamp:
+    """Thin wrapper around a single Hue light."""
 
-    def __init__(self, lamp_id):
-        # not accessible
-        ip = HUE_IP
-        username = HUE_USERNAME
-        # accessible
-        self.bridge = qhue.Bridge(ip, username)
-        self.getter = self.bridge.lights[lamp_id]()
-        self.setter = self.bridge.lights[lamp_id]
-        self.is_on = self.getter['state']['on']
-        self.colour = self.getter['state']['xy']
-        self.name = self.getter['name']
+    def __init__(self, lamp_id: int) -> None:
+        try:
+            ip = HUE_IP
+            username = HUE_USERNAME
+            self.bridge = qhue.Bridge(ip, username)
+            self.getter = self.bridge.lights[lamp_id]()
+            self.setter = self.bridge.lights[lamp_id]
+            self.is_on = self.getter['state']['on']
+            self.colour = self.getter['state']['xy']
+            self.name = self.getter['name']
+        except Exception:
+            logger.exception('Failed to initialise Hue lamp %s', lamp_id)
+            raise
 
-    def __str__(self):
+    def __str__(self) -> str:
         if self.is_on:
             status = 'on and is set to xy:' + str(self.colour)
         else:
             status = 'off'
         return f'{self.name} is {status}'
 
-    def turn_on(self):
+    def turn_on(self) -> str:
         self.setter.state(on=True)
         return 'Lamp turned on'
 
-    def turn_off(self):
+    def turn_off(self) -> str:
         self.setter.state(on=False)
         return 'Lamp turned off'
 
-    def set_colour(self, colour):  # colour is a tuple of xy values
-        self.setter.state(on=True)
-        self.setter.state(xy=colour)
-        return 'Lamp changed colour'
+    def set_colour(self, colour: tuple[float, float]) -> str:  # colour is a tuple of xy values
+        try:
+            self.setter.state(on=True, xy=colour)
+            return 'Lamp changed colour'
+        except Exception:
+            logger.exception('Failed to set lamp colour to %s', colour)
+            raise
 
 
-def lookup_colour(temperature):
+def lookup_colour(temperature: int) -> str:
     # lookup table of temperatures to colours in database.sqlite3
     sql = 'WHERE temperature = (?)'
     what = (temperature,)  # tuple with single item
     results = get_rows('colours', 'hex_value', rows_sql=sql, args=what)
+    if not results:
+        raise ValueError(f'No colour found for temperature threshold {temperature}')
     return results[0][0]  # to return the hex value string only
 
 
-def find_temp_threshold(temp):
+def find_temp_threshold(temp: float) -> int:
     # find max and min thresholds from external database
     rows = get_rows('colours')
 
@@ -148,14 +172,14 @@ def find_temp_threshold(temp):
     return temp_threshold
 
 
-def convert_temp_to_colour(temp):
+def convert_temp_to_colour(temp: float) -> tuple[float, float]:
     temp_threshold = find_temp_threshold(temp)
     converter = Converter(GamutA)
     colour = converter.hex_to_xy(lookup_colour(temp_threshold))
     return colour
 
 
-def generate_graphs(timestamp):
+def generate_graphs(timestamp: str) -> str:
     # observation sets
     now = datetime.strptime(timestamp, DATETIME_STRING)
     last_day = now - timedelta(days=1)
@@ -168,20 +192,21 @@ def generate_graphs(timestamp):
     }
 
     # get datapoints from database
-    rows = get_rows('colours')
-    hex_list = [f'#{hex_string}' for hex_string in [row['hex_value'] for row in rows]]
-    temps_count = {row['temperature']: 0 for row in rows}
+    colour_rows = get_rows('colours')
+    hex_list = [f'#{row["hex_value"]}' for row in colour_rows]
 
     # graphs for every reading in last day, week, month
     for string, then in observation_sets.items():
+        temps_count = {row['temperature']: 0 for row in colour_rows}
+
         # fetch data
         sql = 'WHERE timestamp BETWEEN datetime((?)) AND datetime((?))'
         when = (then, now)
-        rows = get_rows('observations', rows_sql=sql, args=when)
+        observation_rows = get_rows('observations', rows_sql=sql, args=when)
 
         # generate bar graph
-        times = [row['timestamp'] for row in rows]
-        temps = [row['temperature'] for row in rows]
+        times = [row['timestamp'] for row in observation_rows]
+        temps = [row['temperature'] for row in observation_rows]
 
         bar_chart = pygal.Bar(x_label_rotation=20,
                               x_labels_major_count=6,
@@ -194,7 +219,11 @@ def generate_graphs(timestamp):
                       )
         bar_chart.x_labels = times
         filename = string + '_bar.svg'
-        bar_chart.render_to_file(FILEPATH + filename)
+        try:
+            bar_chart.render_to_file(FILEPATH + filename)
+        except Exception:
+            logger.exception('Failed to render bar chart %s', filename)
+            raise
 
         # generate pie chart
         for temp in temps:
@@ -205,7 +234,11 @@ def generate_graphs(timestamp):
         for temp, count in temps_count.items():
             pie_chart.add(str(temp), count)
         filename = string + '_pie.svg'
-        pie_chart.render_to_file(FILEPATH + filename)
+        try:
+            pie_chart.render_to_file(FILEPATH + filename)
+        except Exception:
+            logger.exception('Failed to render pie chart %s', filename)
+            raise
 
         # generate radar chart
         radar_chart = pygal.Radar(x_labels_major_count=12,
@@ -216,11 +249,11 @@ def generate_graphs(timestamp):
                                         for temp in temps])
         radar_chart.x_labels = times
         filename = string + '_radar.svg'
-        radar_chart.render_to_file(FILEPATH + filename)
-
-    # calculate values for annual graph
-    from statistics import mean
-    from dateutil.relativedelta import relativedelta
+        try:
+            radar_chart.render_to_file(FILEPATH + filename)
+        except Exception:
+            logger.exception('Failed to render radar chart %s', filename)
+            raise
 
     month_name = {1: 'Jan', 2: 'Feb', 3: 'Mar', 4: 'Apr', 5: 'May', 6: 'Jun', 7: 'Jul', 8: 'Aug', 9: 'Sep', 10: 'Oct',
                   11: 'Nov', 12: 'Dec'}
@@ -237,7 +270,10 @@ def generate_graphs(timestamp):
 
         month_temps[start] = []
         month_temps[start].extend(row['temperature'] for row in rows)
-        month_colour[start] = '#' + lookup_colour(find_temp_threshold(mean(month_temps[start])))
+        if month_temps[start]:
+            month_colour[start] = '#' + lookup_colour(find_temp_threshold(mean(month_temps[start])))
+        else:
+            month_colour[start] = '#ffffff'
 
     # box plot of preceding 12 months
     custom_style = Style(
@@ -255,7 +291,11 @@ def generate_graphs(timestamp):
     for month_start, temps in month_temps.items():
         box_plot.add(month_name[month_start.month], temps)
     filename = 'annual_box.svg'
-    box_plot.render_to_file(FILEPATH + filename)
+    try:
+        box_plot.render_to_file(FILEPATH + filename)
+    except Exception:
+        logger.exception('Failed to render annual box chart %s', filename)
+        raise
 
     return 'Created graphs'
 
@@ -266,26 +306,30 @@ hue_lamp_ids = {
 }
 
 
-def weather():
-    # Check current weather
-    observation = WeatherObservation()
-    observation.new(HOME_LOCATION)
-    print(observation)
+def weather() -> str:
+    try:
+        # Check current weather
+        observation = WeatherObservation()
+        observation.fetch(HOME_LOCATION)
+        logger.info('%s', observation)
 
-    # Set lounge bloom to current temperature
-    lounge_bloom = HueLamp(hue_lamp_ids['lounge bloom'])
-    lounge_bloom.set_colour(convert_temp_to_colour(observation.temperature))
-    # Set den bloom to current temperature
-    den_bloom = HueLamp(hue_lamp_ids['den bloom'])
-    den_bloom.set_colour(convert_temp_to_colour(observation.temperature))
+        # Set lounge bloom to current temperature
+        lounge_bloom = HueLamp(hue_lamp_ids['lounge bloom'])
+        lounge_bloom.set_colour(convert_temp_to_colour(observation.temperature))
+        # Set den bloom to current temperature
+        den_bloom = HueLamp(hue_lamp_ids['den bloom'])
+        den_bloom.set_colour(convert_temp_to_colour(observation.temperature))
 
-    # Log weather observation
-    observation.log()
+        # Log weather observation
+        observation.log()
 
-    # generate new graphs
-    generate_graphs(observation.timestamp)
+        # generate new graphs
+        generate_graphs(observation.timestamp)
 
-    return 'Fetched weather'
+        return 'Fetched weather'
+    except Exception:
+        logger.exception('Weather job failed')
+        return 'Weather job failed'
 
 
 if __name__ == '__main__':
