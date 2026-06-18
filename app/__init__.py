@@ -23,10 +23,17 @@ def start_scheduler():
     if getattr(schedule, 'running', False):
         return
 
-    from datetime import datetime
+    from datetime import datetime, timedelta
     from apscheduler.triggers.interval import IntervalTrigger
 
-    schedule.add_job(run_weather, trigger=IntervalTrigger(minutes=10, start_date=datetime.now()))
+    # Run one observation immediately on server startup.
+    run_weather()
+
+    # Schedule recurring observations every 10 minutes after the initial run.
+    schedule.add_job(
+        run_weather,
+        trigger=IntervalTrigger(minutes=10, start_date=datetime.now() + timedelta(minutes=10)),
+    )
     schedule.start()
 
 
