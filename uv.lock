@@ -169,6 +169,18 @@ wheels = [
 ]
 
 [[package]]
+name = "importlib-metadata"
+version = "9.0.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "zipp" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/a9/01/15bb152d77b21318514a96f43af312635eb2500c96b55398d020c93d86ea/importlib_metadata-9.0.0.tar.gz", hash = "sha256:a4f57ab599e6a2e3016d7595cfd72eb4661a5106e787a95bcc90c7105b831efc", size = 56405, upload-time = "2026-03-20T06:42:56.999Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/38/3d/2d244233ac4f76e38533cfcb2991c9eb4c7bf688ae0a036d30725b8faafe/importlib_metadata-9.0.0-py3-none-any.whl", hash = "sha256:2d21d1cc5a017bd0559e36150c21c830ab1dc304dedd1b7ea85d20f45ef3edd7", size = 27789, upload-time = "2026-03-20T06:42:55.665Z" },
+]
+
+[[package]]
 name = "iniconfig"
 version = "2.3.0"
 source = { registry = "https://pypi.org/simple" }
@@ -203,6 +215,15 @@ name = "markupsafe"
 version = "3.0.2"
 source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/b2/97/5d42485e71dfc078108a86d6de8fa46db44a1a9295e89c5d6d4a06e23a62/markupsafe-3.0.2.tar.gz", hash = "sha256:ee55d3edf80167e48ea11a923c7386f4669df67d7994554387f84e7d8b0a2bf0", size = 20537, upload-time = "2024-10-18T15:21:54.129Z" }
+
+[[package]]
+name = "oauthlib"
+version = "3.3.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/0b/5f/19930f824ffeb0ad4372da4812c50edbd1434f678c90c2733e1188edfc63/oauthlib-3.3.1.tar.gz", hash = "sha256:0f0f8aa759826a193cf66c12ea1af1637f87b9b4622d46e866952bb022e538c9", size = 185918, upload-time = "2025-06-19T22:48:08.269Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/be/9c/92789c596b8df838baa98fa71844d84283302f7604ed565dafe5a6b5041a/oauthlib-3.3.1-py3-none-any.whl", hash = "sha256:88119c938d2b8fb88561af5f6ee0eec8cc8d552b7bb1f712743136eb7523b7a1", size = 160065, upload-time = "2025-06-19T22:48:06.508Z" },
+]
 
 [[package]]
 name = "packaging"
@@ -260,12 +281,12 @@ requires-dist = [
     { name = "itsdangerous", specifier = "==2.2.0" },
     { name = "jinja2", specifier = "==3.1.6" },
     { name = "markupsafe", specifier = "==3.0.2" },
-    { name = "pygal", specifier = "==2.4.0" },
-    { name = "pyowm", specifier = "==3.1.1" },
+    { name = "pygal", specifier = "==3.1.0" },
+    { name = "pyowm", specifier = "==3.5.0" },
     { name = "pytest", specifier = ">=8.0.0" },
     { name = "pytest-cov", specifier = ">=5.0.0" },
     { name = "python-dateutil", specifier = ">=2.9.0.post0" },
-    { name = "qhue", specifier = "==1.0.12" },
+    { name = "qhue", specifier = "==2.0.1" },
     { name = "requests", specifier = "==2.32.3" },
     { name = "rgbxy", specifier = "==0.5" },
     { name = "setuptools", specifier = "<82" },
@@ -275,11 +296,14 @@ requires-dist = [
 
 [[package]]
 name = "pygal"
-version = "2.4.0"
+version = "3.1.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/14/52/2394f0f8444db3af299f2700aaff22f8cc3741fbd5ed644f782327d356b3/pygal-2.4.0.tar.gz", hash = "sha256:9204f05380b02a8a32f9bf99d310b51aa2a932cba5b369f7a4dc3705f0a4ce83", size = 74686, upload-time = "2017-07-05T09:22:39.923Z" }
+dependencies = [
+    { name = "importlib-metadata" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/b0/b6/04176faeb312c84d7f9bc1a810f96ee38d15597e226bb9bda59f3a5cb122/pygal-3.1.0.tar.gz", hash = "sha256:fbdee7351a7423e7907fb8a9c3b77305f6b5678cb2e6fd0db36a8825e42955ec", size = 81006, upload-time = "2025-12-09T10:29:19.587Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/5f/b7/201c9254ac0d2b8ffa3bb2d528d23a4130876d9ba90bc28e99633f323f17/pygal-2.4.0-py2.py3-none-any.whl", hash = "sha256:27abab93cbc31e21f3c6bdecc05bda6cd3570cbdbd8297b7caa6904051b50d72", size = 127598, upload-time = "2017-07-05T09:22:41.678Z" },
+    { url = "https://files.pythonhosted.org/packages/0b/4c/2862dd25352fe4b22ec7760d4fa12cb692587cd7ec3e378cbf644fc0d2a8/pygal-3.1.0-py3-none-any.whl", hash = "sha256:4e923490f3490c90c481f4535fa3adcda20ff374257ab9d8ae897f91b632c0bb", size = 130171, upload-time = "2025-12-09T10:29:16.721Z" },
 ]
 
 [[package]]
@@ -293,16 +317,16 @@ wheels = [
 
 [[package]]
 name = "pyowm"
-version = "3.1.1"
+version = "3.5.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "geojson" },
     { name = "pysocks" },
     { name = "requests", extra = ["socks"] },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/54/15/19b0ad1c80146427f3a129b437ef8b4b99f10cb92bf4854814498dbdf039/pyowm-3.1.1.tar.gz", hash = "sha256:a7b18297a9189dbe5f6b454b12d61a407e35c7eb9ca75bcabfe5e1c83245290d", size = 3215204, upload-time = "2020-10-02T17:14:23.257Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/3f/bc/4afbc60995ba757b0f6c4d200daa4b544a5100154ffcf169b848d5ef0392/pyowm-3.5.0.tar.gz", hash = "sha256:9a44d6d43941419a73fd9dbe16066ad8a25204ea906774fd5bf5b0ec52d2a1a4", size = 4516427, upload-time = "2025-08-26T22:35:05.292Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/69/dc/05403b515accf6f420d004af09add0f497e676725e64033a1af5f4970ebc/pyowm-3.1.1-py3-none-any.whl", hash = "sha256:70dbeb41716937ccee694cc9f93c55e08781a019772b9683fed550ce81aefe02", size = 3281628, upload-time = "2020-10-02T17:14:16.58Z" },
+    { url = "https://files.pythonhosted.org/packages/72/41/f1cf7e715a90dd3ba3d1c5a20ba3703529a41a27ce6fd5a6700acc78a8fe/pyowm-3.5.0-py3-none-any.whl", hash = "sha256:6f71bdec738af809b7a43c0725094756f04dbf78bf48eb0f72efbfc6f11ddd8f", size = 4546678, upload-time = "2025-08-26T22:35:03.635Z" },
 ]
 
 [[package]]
@@ -358,12 +382,13 @@ wheels = [
 
 [[package]]
 name = "qhue"
-version = "1.0.12"
+version = "2.0.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "requests" },
+    { name = "requests-oauthlib" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/50/7f/b80f6d164272c89656185ba916d3ca831b68fb0631ef33f486029043e613/qhue-1.0.12.tar.gz", hash = "sha256:d298fae24a0b13b01f46981a5a64633e7fc6fd92e86e7aa0febb570c1fbcace4", size = 8141, upload-time = "2019-01-04T08:59:03.849Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/75/c3/3c2a08dc4229e088f05bf14b61b7c62a1623042cd4a7b807a9b4d24d8d29/qhue-2.0.1.tar.gz", hash = "sha256:bf2df049388f690724b25cce621b3c51cbe2d69be97daf0b9f448caa468b2002", size = 17277, upload-time = "2021-10-31T10:56:58.464Z" }
 
 [[package]]
 name = "requests"
@@ -383,6 +408,19 @@ wheels = [
 [package.optional-dependencies]
 socks = [
     { name = "pysocks" },
+]
+
+[[package]]
+name = "requests-oauthlib"
+version = "2.0.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "oauthlib" },
+    { name = "requests" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/42/f2/05f29bc3913aea15eb670be136045bf5c5bbf4b99ecb839da9b422bb2c85/requests-oauthlib-2.0.0.tar.gz", hash = "sha256:b3dffaebd884d8cd778494369603a9e7b58d29111bf6b41bdc2dcd87203af4e9", size = 55650, upload-time = "2024-03-22T20:32:29.939Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/3b/5d/63d4ae3b9daea098d5d6f5da83984853c1bbacd5dc826764b249fe119d24/requests_oauthlib-2.0.0-py2.py3-none-any.whl", hash = "sha256:7dd8a5c40426b779b0868c404bdef9768deccf22749cde15852df527e6269b36", size = 24179, upload-time = "2024-03-22T20:32:28.055Z" },
 ]
 
 [[package]]
@@ -449,4 +487,13 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/9f/69/83029f1f6300c5fb2471d621ab06f6ec6b3324685a2ce0f9777fd4a8b71e/werkzeug-3.1.3.tar.gz", hash = "sha256:60723ce945c19328679790e3282cc758aa4a6040e4bb330f53d30fa546d44746", size = 806925, upload-time = "2024-11-08T15:52:18.093Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/52/24/ab44c871b0f07f491e5d2ad12c9bd7358e527510618cb1b803a88e986db1/werkzeug-3.1.3-py3-none-any.whl", hash = "sha256:54b78bf3716d19a65be4fceccc0d1d7b89e608834989dfae50ea87564639213e", size = 224498, upload-time = "2024-11-08T15:52:16.132Z" },
+]
+
+[[package]]
+name = "zipp"
+version = "4.1.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/b9/d8/eab98a517c14134c0b2eb4e2387bc5f457334293ec5d2dd3857ec2966802/zipp-4.1.0.tar.gz", hash = "sha256:4cb57381f544315db7688e976e922a2b18cdb513d21cc194eb42232ba2a3e602", size = 26214, upload-time = "2026-05-18T20:08:57.967Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/3a/13/547360d81e6d88d58492968ffda9f9542854f11310ee556fef14260cc886/zipp-4.1.0-py3-none-any.whl", hash = "sha256:25ad4e16390cd314347dd8f1de67a2ac538ae658ed4ab9db16029c07c188e97f", size = 10238, upload-time = "2026-05-18T20:08:57.045Z" },
 ]

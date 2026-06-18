@@ -70,6 +70,7 @@ The current code uses a simple background scheduler. This is not a complicated s
 ---
 
 ## 3. Nice-to-have
+✅ DONE
 
 These are probably straightforward upgrades, but they should still be validated in the app:
 
@@ -90,36 +91,17 @@ These are probably straightforward upgrades, but they should still be validated 
 ### 3.2 Dependencies That Look Unnecessary
 ✅ DONE
 
+**Status:** All unnecessary *direct* dependencies have been removed from `pyproject.toml`.
 
-### 3.2.1 `geojson`
+The following packages are no longer direct project dependencies:
+- `chardet`: Removed. No longer pulled in by modern `requests`.
+- `geojson`: Removed from direct deps. Still pulled transitively by `pyowm==3.5.0` (legitimate use).
+- `six`: Removed from direct deps. Still pulled transitively by `python-dateutil>=2.9.0` (legitimate use).
+- `pysocks`: Removed from direct deps. Still pulled transitively by `pyowm==3.5.0` and `requests==2.32.3` (legitimate use).
+- `tzlocal`: Removed from direct deps. Still pulled transitively by `apscheduler==3.11.2` (legitimate use).
+- `pytz`: Removed from direct deps. No longer needed by `apscheduler==3.11.2`.
 
-This dependency does not appear to be used by the codebase.
-
-**Recommendation:** Remove it unless you know it is needed for something outside the current source tree.
-
----
-
-### 3.2.2 `six`
-
-This is a Python 2 compatibility layer. The project targets modern Python.
-
-**Recommendation:** Remove it if nothing imports it directly or indirectly for a reason you care about.
-
----
-
-### 3.2.3 `chardet`
-
-The project does not use `chardet` directly. In modern `requests` setups it is often no longer the default charset detector anyway.
-
-**Recommendation:** Remove it unless the resolver or another package specifically requires it.
-
----
-
-### 3.2.4 `pysocks`
-
-This may still be pulled in transitively by something else, but it is not obviously used in the application code.
-
-**Recommendation:** Keep only if the dependency resolver or runtime actually needs it.
+**Outcome:** Transitive dependencies remain in `requirements.txt` where legitimately needed by upstream libraries. Application code does not import any of these packages directly.
 
 ---
 
