@@ -11,7 +11,7 @@ def graphs() -> dict[str, str]:
         'lastday': 'last_day_radar.svg',
         'lastweek': 'last_week_bar.svg',
         'lastmonth': 'last_month_pie.svg',
-        'lastyear': 'annual_box.svg'
+        'lastyear': 'last_year_box.svg'
     }
 
 

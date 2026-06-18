@@ -306,7 +306,7 @@ def generate_graphs(timestamp: str) -> str:
                          style=custom_style)
     for month_start, temps in month_temps.items():
         box_plot.add(month_name[month_start.month], temps)
-    filename = 'annual_box.svg'
+    filename = 'last_year_box.svg'
     try:
         box_plot.render_to_file(FILEPATH + filename)
     except Exception:
