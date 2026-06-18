@@ -28,7 +28,6 @@ Notes:
 - Logged data is persistent
 - Using free versions of all API, so there is limit to number of calls
 """
-import sitecustomize
 from datetime import datetime, timedelta
 import logging
 from statistics import mean
