@@ -6,7 +6,6 @@ from app import content
 
 
 CONTENT = content.graphs()
-COLOURS_TABLE = content.colours_table()
 
 
 @app.route('/')
@@ -19,7 +18,7 @@ def index() -> str:
 @app.route('/colours')
 def colours() -> str:
     """Render the temperature-to-colour reference table."""
-    return render_template('colours.html', title='Colours', rows=COLOURS_TABLE)
+    return render_template('colours.html', title='Colours', rows=content.colours_table())
 
 
 @app.after_request

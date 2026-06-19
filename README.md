@@ -74,7 +74,7 @@ This will fetch a single observation, update the Hue lights, log to the database
 
 | Route | Description |
 |-------|-------------|
-| `/` or `/index` | Dashboard with temperature graphs (last 24 hours, last week) |
+| `/` or `/index` | Dashboard with four graphs: last 24h (radar), last week (bar), last month (pie), last year (box) |
 | `/colours` | Colour key table showing the temperature-to-colour mapping |
 
 ## Project structure
@@ -95,9 +95,10 @@ pybloom/
 │   │   └── colours.html
 │   └── static/             # Static assets (favicons, logos)
 ├── tests/
-│   └── test.py
+│   ├── conftest.py
+│   └── test_pybloom.py
 ├── docs/
-│   └── PyBloom_manual.md   # Detailed development manual
+│   └── PyBloom-v2-manual.md   # Detailed development manual
 ├── pyproject.toml
 ├── requirements.txt
 └── .python-version
@@ -116,4 +117,4 @@ pybloom/
 
 ## Further reading
 
-See [docs/PyBloom_manual.md](docs/PyBloom_manual.md) for a detailed development manual covering the architecture, design decisions, and step-by-step code walkthrough.
+See [docs/PyBloom-v2-manual.md](docs/PyBloom-v2-manual.md) for a detailed development manual covering the architecture, design decisions, and step-by-step code walkthrough.

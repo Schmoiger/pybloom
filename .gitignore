@@ -52,7 +52,7 @@ __pycache__*
 Icon*
 
 # Generated vector assets / design exports
-**/*.svg
+last*.svg
 
 # Standard Git directory (Redundant but kept)
 .git
