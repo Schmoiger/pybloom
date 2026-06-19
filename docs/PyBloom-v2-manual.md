@@ -2110,7 +2110,19 @@ These tests are meant to be run ad-hoc, to prove that a new feature hasn't broke
 
 `test_main_block_coverage`: Verifies explicit main-block weather call path for coverage.
 
+`test_should_start_scheduler_disabled_by_env`: Verifies scheduler start is blocked when `PYBLOOM_DISABLE_SCHEDULER=1`.
 
+`test_should_start_scheduler_enabled_in_normal_run`: Verifies scheduler guard allows startup when no disable flag is set.
+
+`test_initialize_runtime_init_db_only`: Verifies explicit runtime initializer can run DB setup without starting scheduler jobs.
+
+`test_initialize_runtime_starts_scheduler_when_allowed`: Verifies explicit runtime initializer starts scheduler when background jobs are enabled and allowed.
+
+`test_initialize_runtime_is_idempotent`: Verifies runtime initialization only runs once even if called multiple times.
+
+`test_should_initialize_runtime_on_import_false_under_pytest`: Verifies import-time runtime initialization is skipped when running under pytest.
+
+`test_should_initialize_runtime_on_import_true_normally`: Verifies import-time runtime initialization is enabled outside pytest.
 
 ## **How to run tests and review results**
 
@@ -2205,6 +2217,46 @@ Rule of thumb:
 
 * Use fixtures in `tests/conftest.py` when many tests need the same fake dependency.
 * Use inline monkeypatching in a single test when behavior is test-specific.
+
+## Test isolation
+
+With automated testing comes lack of oversight of test execution. If tests are repeated, then multiple instances of the scheduled job could run at the same time. To prevent this, startup behavior is isolated behind explicit helper functions and a simple import-time pytest guard.
+
+### Current startup model
+
+`app/__init__.py` centralizes startup behavior in:
+
+1. `initialize_runtime(init_database=True, start_background_jobs=True)` to run DB setup and optional scheduler startup.
+2. `should_start_scheduler()` to allow disabling the scheduler with `PYBLOOM_DISABLE_SCHEDULER=1`.
+3. `should_initialize_runtime_on_import()` to skip import-time initialization under pytest.
+
+This keeps normal runs simple (`uv run flask run` still initializes immediately), while tests can import modules without accidentally starting the scheduler.
+
+### Scheduler guard
+
+The scheduler guard is now intentionally minimal:
+
+def should_start_scheduler() -> bool:
+    """Return True when scheduler should start for this process."""
+    return os.getenv('PYBLOOM_DISABLE_SCHEDULER') != '1'
+
+def initialize_runtime(*, init_database: bool = True, start_background_jobs: bool = True) -> None:
+        global runtime_initialized
+        if runtime_initialized:
+                return
+
+        if init_database:
+                init_db()
+
+        if start_background_jobs and should_start_scheduler():
+                start_scheduler()
+        runtime_initialized = True
+
+def should_initialize_runtime_on_import() -> bool:
+        return 'pytest' not in sys.modules
+
+if should_initialize_runtime_on_import():
+        initialize_runtime(init_database=True, start_background_jobs=True)
 
 ---
 

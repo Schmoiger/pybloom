@@ -4,6 +4,7 @@ from datetime import datetime
 
 import db_utils
 import pybloom
+import app as app_pkg
 
 
 def test_find_temp_threshold_clamps_to_database_bounds(monkeypatch, colour_threshold_rows):
@@ -142,7 +143,71 @@ def test_colours_route_renders(flask_client):
     assert b'Colour key' in response.data
 
 
-# Additional tests for coverage improvement to 95%
+def test_should_start_scheduler_disabled_by_env(monkeypatch):
+    monkeypatch.setenv('PYBLOOM_DISABLE_SCHEDULER', '1')
+
+    assert app_pkg.should_start_scheduler() is False
+
+
+def test_should_start_scheduler_enabled_in_normal_run(monkeypatch):
+    monkeypatch.delenv('PYBLOOM_DISABLE_SCHEDULER', raising=False)
+
+    assert app_pkg.should_start_scheduler() is True
+
+
+def test_initialize_runtime_init_db_only(monkeypatch):
+    monkeypatch.setattr(app_pkg, 'runtime_initialized', False)
+    calls = {'init_db': 0, 'start_scheduler': 0}
+
+    monkeypatch.setattr(app_pkg, 'init_db', lambda: calls.__setitem__('init_db', calls['init_db'] + 1))
+    monkeypatch.setattr(app_pkg, 'start_scheduler', lambda: calls.__setitem__('start_scheduler', calls['start_scheduler'] + 1))
+
+    app_pkg.initialize_runtime(init_database=True, start_background_jobs=False)
+
+    assert calls['init_db'] == 1
+    assert calls['start_scheduler'] == 0
+
+
+def test_initialize_runtime_starts_scheduler_when_allowed(monkeypatch):
+    monkeypatch.setattr(app_pkg, 'runtime_initialized', False)
+    calls = {'init_db': 0, 'start_scheduler': 0}
+
+    monkeypatch.setattr(app_pkg, 'init_db', lambda: calls.__setitem__('init_db', calls['init_db'] + 1))
+    monkeypatch.setattr(app_pkg, 'start_scheduler', lambda: calls.__setitem__('start_scheduler', calls['start_scheduler'] + 1))
+    monkeypatch.setattr(app_pkg, 'should_start_scheduler', lambda: True)
+
+    app_pkg.initialize_runtime(init_database=False, start_background_jobs=True)
+
+    assert calls['init_db'] == 0
+    assert calls['start_scheduler'] == 1
+
+
+def test_initialize_runtime_is_idempotent(monkeypatch):
+    monkeypatch.setattr(app_pkg, 'runtime_initialized', False)
+    calls = {'init_db': 0, 'start_scheduler': 0}
+
+    monkeypatch.setattr(app_pkg, 'init_db', lambda: calls.__setitem__('init_db', calls['init_db'] + 1))
+    monkeypatch.setattr(app_pkg, 'start_scheduler', lambda: calls.__setitem__('start_scheduler', calls['start_scheduler'] + 1))
+    monkeypatch.setattr(app_pkg, 'should_start_scheduler', lambda: True)
+
+    app_pkg.initialize_runtime(init_database=True, start_background_jobs=True)
+    app_pkg.initialize_runtime(init_database=True, start_background_jobs=True)
+
+    assert calls['init_db'] == 1
+    assert calls['start_scheduler'] == 1
+
+
+def test_should_initialize_runtime_on_import_false_under_pytest(monkeypatch):
+    monkeypatch.setattr(app_pkg, 'sys', type('S', (), {'modules': {'pytest': object()}})())
+
+    assert app_pkg.should_initialize_runtime_on_import() is False
+
+
+def test_should_initialize_runtime_on_import_true_normally(monkeypatch):
+    monkeypatch.setattr(app_pkg, 'sys', type('S', (), {'modules': {}})())
+
+    assert app_pkg.should_initialize_runtime_on_import() is True
+    
 
 def test_weather_observation_fetch_success(mock_owm, temp_db, monkeypatch):
     """Test successful weather fetch from OpenWeatherMap API."""
