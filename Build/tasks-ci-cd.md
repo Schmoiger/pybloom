@@ -18,7 +18,7 @@ The few concrete things to watch are:
 
 ---
 
-## 2. Cleanup
+## 2. Design
 
 That means the sensible split is:
 
@@ -36,7 +36,7 @@ Those are reasonable in larger projects, but they add more maintenance than valu
 
 ---
 
-## 3. Cleanup
+## 3. Today
 
 Today the workflow is basically manual:
 
@@ -48,7 +48,7 @@ That works, but it is easy to miss a broken test or a bad deploy.
 
 ---
 
-## 4. Cleanup
+## 4. CI
 
 ### Recommended scope
 
@@ -107,7 +107,7 @@ jobs:
 
 ---
 
-## 5. Cleanup
+## 5. CD
 
 ### Recommended approach
 
@@ -179,7 +179,8 @@ Those are all defensible, but they are not necessary for the first useful versio
 
 ---
 
-## 6. Cleanup
+## 6. Restart on Reboot
+✅ DONE
 
 PyBloom should run as a `systemd` service on the Pi. That is the simplest reliable way to keep it alive after reboot and restart it after deployment.
 
@@ -189,16 +190,15 @@ Create `/etc/systemd/system/pybloom.service` on the Pi:
 
 ```ini
 [Unit]
-Description=PyBloom Weather Station
+Description=PyBloom Weather Station (Flask web server)
 After=network.target
 
 [Service]
 Type=simple
 User=pi
 WorkingDirectory=/home/pi/Projects/pybloom
-ExecStart=/home/pi/Projects/pybloom/.venv/bin/python -m flask --app app run --host=0.0.0.0
-Restart=on-failure
-RestartSec=10
+ExecStart=/home/pi/.virtualenvs/pybloom/bin/flask run --host=0.0.0.0
+Restart=always
 
 [Install]
 WantedBy=multi-user.target
