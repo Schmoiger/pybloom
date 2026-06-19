@@ -2026,6 +2026,188 @@ sudo systemctl status pybloom.service
 
 ---
 
+# Testing
+
+My target for testing is to have a fully automated test suite that covers at least 95% of the code. The code is of acceptable quality if 95% of the tests pass. The reason for not aiming for 100%-100% is that some of the code is not worth testing; error handling of edge cases (e.g., network outage) is not worth testing because it’s uncommon, and if it goes wrong there's a more significant problem (e.g., the network is down).
+
+I implemented a test suite using the pytest framework. The tests are located in the tests/ directory, and each test file is named test_*.py. The tests cover unit tests for the functions in the app, as well as integration tests for the web pages. I haven't written tests for the database, the external API calls, or the web pages as these are relatively trivial.
+
+These tests are meant to be run ad-hoc, to prove that a new feature hasn't broken existing code (regression testing). They could also be run as part of CI e.g., triggered by a GitHub Action on a push to the repository.
+
+## **Current test functions and what each checks**
+
+`test_find_temp_threshold_clamps_to_database_bounds`: Verifies threshold clamping at the configured minimum and maximum values.
+
+`test_lookup_colour_returns_matching_hex`: Verifies that a valid threshold returns the mapped hex value.
+
+`test_lookup_colour_raises_for_missing_threshold`: Verifies that a missing threshold raises a `ValueError`.
+
+`test_weather_observation_set_and_str`: Verifies manual field assignment and string representation formatting.
+
+`test_get_rows_rejects_invalid_table`: Verifies invalid table names are rejected explicitly.
+
+`test_init_db_creates_and_seeds_schema`: Verifies schema creation and default colours seeding.
+
+`test_get_rows_returns_named_rows`: Verifies row-factory style keyed access on returned query rows.
+
+`test_weather_orchestration_calls_external_steps`: Verifies top-level orchestration calls fetch, lamp update, log, and graph generation.
+
+`test_hue_lamp_set_colour_combines_state_updates`: Verifies `set_colour` sends a single combined Hue state update.
+
+`test_home_route_renders`: Verifies `/` route returns HTTP 200 and expected page content.
+
+`test_colours_route_renders`: Verifies `/colours` route returns HTTP 200 and expected content.
+
+`test_weather_observation_fetch_success`: Verifies successful weather fetch populates timestamp, temperature, and status.
+
+`test_weather_observation_fetch_api_failure`: Verifies API manager failures surface as exceptions.
+
+`test_weather_observation_fetch_none_observation`: Verifies `None` observation responses are handled as errors.
+
+`test_weather_observation_fetch_none_weather_reading`: Verifies missing weather payloads are handled as errors.
+
+`test_weather_observation_log_success`: Verifies observation insert/write behavior into SQLite.
+
+`test_weather_observation_log_database_failure`: Verifies database connection failures during log are surfaced.
+
+`test_hue_lamp_str_on`: Verifies lamp string representation when lamp state is on.
+
+`test_hue_lamp_str_off`: Verifies lamp string representation when lamp state is off.
+
+`test_hue_lamp_turn_on`: Verifies Hue on-command payload.
+
+`test_hue_lamp_turn_off`: Verifies Hue off-command payload.
+
+`test_hue_lamp_set_colour_exception`: Verifies colour set failures are surfaced from the Hue layer.
+
+`test_hue_lamp_init_exception`: Verifies Hue bridge initialization failures are surfaced.
+
+`test_convert_temp_to_colour`: Verifies threshold lookup plus converter path returns XY colour.
+
+`test_generate_graphs_with_data`: Verifies graph generation path with observation data.
+
+`test_generate_graphs_with_no_data`: Verifies graph generation path when observation set is empty.
+
+`test_weather_with_none_temperature`: Verifies weather orchestration fails safely when temperature is missing.
+
+`test_weather_with_none_timestamp`: Verifies weather orchestration fails safely when timestamp is missing.
+
+`test_weather_fetch_error_propagates`: Verifies fetch exceptions are captured by weather job handling.
+
+`test_main_block_execution`: Verifies main execution path calls `weather()`.
+
+`test_datetime_import`: Verifies required datetime import availability.
+
+`test_statistics_import`: Verifies required statistics import availability.
+
+`test_generate_graphs_bar_chart_exception`: Verifies bar chart render failures are propagated.
+
+`test_generate_graphs_pie_chart_exception`: Verifies pie chart render failures are propagated.
+
+`test_generate_graphs_radar_chart_exception`: Verifies radar chart render failures are propagated.
+
+`test_generate_graphs_box_chart_exception`: Verifies box chart render failures are propagated.
+
+`test_main_block_coverage`: Verifies explicit main-block weather call path for coverage.
+
+
+
+## **How to run tests and review results**
+
+Run tests from the project root using `uv`:
+
+```bash
+uv run pytest -q
+```
+
+What this command does:
+
+1. Executes all tests in `tests/test_pybloom.py`.
+2. Prints a compact pass/fail summary (`-q` = quiet mode).
+3. Prints coverage output configured in `pyproject.toml`.
+
+To run a single test function while debugging:
+
+```bash
+uv run pytest -q tests/test_pybloom.py::test_weather_orchestration_calls_external_steps
+```
+
+To run a subset of tests by name pattern:
+
+```bash
+uv run pytest -q -k "weather_observation or hue_lamp"
+```
+
+How to review test results:
+
+1. Check the final summary line (for example: `37 passed`), which confirms overall suite status.
+2. If any test fails, read the traceback section for:
+        * failing test function name,
+        * assertion message,
+        * line number where the failure occurred.
+3. Review the coverage table to see per-module coverage for `app`, `db_utils.py`, and `pybloom.py`.
+4. Use the `Missing` column to identify exact lines not covered by tests.
+
+Practical interpretation:
+
+* If all tests pass and coverage remains near the current baseline, changes are likely safe to merge.
+* If tests pass but coverage drops unexpectedly, add or update targeted tests before merging.
+* If one integration-like test fails intermittently, re-run that single test first to rule out flaky setup.
+
+## **How patching works (especially `monkeypatch`)**
+
+Many tests in this project avoid real network and hardware calls by patching dependencies at runtime. In pytest, the `monkeypatch` fixture temporarily replaces attributes, functions, or environment values for the duration of a test, then automatically restores them.
+
+Why this matters in PyBloom:
+
+1. Real integrations (Hue bridge, OpenWeatherMap, scheduler timing) are non-deterministic.
+2. Unit tests should verify our code logic, not external service uptime.
+3. Patching keeps tests fast and reproducible on any machine.
+
+Typical pattern used here:
+
+```python
+def test_lookup_colour_returns_matching_hex(monkeypatch):
+        monkeypatch.setattr(
+                pybloom,
+                'get_rows',
+                lambda table, columns='*', **kwargs: [('ffbf00',)],
+        )
+
+        assert pybloom.lookup_colour(25) == 'ffbf00'
+```
+
+What happens in that example:
+
+1. `pybloom.get_rows` is replaced with a local lambda.
+2. `lookup_colour()` runs against predictable fake data.
+3. After the test, pytest restores the original `get_rows` automatically.
+
+Common `monkeypatch` uses in this codebase:
+
+* Replace API clients: patch `pybloom.pyowm.OWM` to simulate success/failure responses.
+* Replace Hue bridge objects: patch `pybloom.qhue.Bridge` to avoid real bulb/network calls.
+* Replace utility functions: patch `pybloom.generate_graphs`, `pybloom.convert_temp_to_colour`, or `db_utils.db_connect` to isolate orchestration logic.
+* Replace constants/paths: patch `pybloom.FILEPATH` so graph tests write to a temp folder.
+
+Patch where the symbol is looked up:
+
+* If a function calls `pybloom.db_connect`, patch `pybloom.db_connect`.
+* Patching `db_utils.db_connect` alone will not affect call sites that already imported a local reference.
+
+Useful variants:
+
+* `monkeypatch.setattr(obj, 'name', replacement)` for functions/classes.
+* `monkeypatch.setenv('NAME', 'value')` for environment-driven code paths.
+* `monkeypatch.delenv('NAME', raising=False)` to simulate missing env vars.
+
+Rule of thumb:
+
+* Use fixtures in `tests/conftest.py` when many tests need the same fake dependency.
+* Use inline monkeypatching in a single test when behavior is test-specific.
+
+---
+
 # **CI using GitHub**
 
 GitHub is a cloud-based service that hosts Git repositories. It provides a web-based interface for managing code, tracking changes, and collaborating with others. By integrating your local Git repository with GitHub, you can easily push your code to the cloud, share it with others, and take advantage of GitHub's features like pull requests, issues, and actions.
@@ -2074,10 +2256,8 @@ Thank you for joining me on this journey. Hope it’s been a little help with yo
 
 Over the course of this document, I’ve described how I’ve implemented the features of my program. It’s doing what I intended it to do, the lights are showing how the evenings are getting colder. It’s fine for personal consumption, but it wouldn’t be fine for others to use. Before going into new features, I should look at *operationalising* the code, which will be a whole different set of challenges:
 
-* The program should be *available* (to an acceptable service level), which means it should be deployed onto a hosted site.  
-* I’ve done precious little formal *testing*. At least, operationalised code should have a testing approach consisting of: test data, test cases, expected results. At best, these tests should be completed automatically, as the code is promoted from dev to prod. This is the basis of *continuous deployment*.  
-* Operational tools: manual CRUD access to the databases \- because I built in a way of manually adding data, but didn’t build a way to remove it.  
-* We should keep track of *versions*, not just to roll back in case of emergency, but to keep track of features in dev that haven’t quite made it to prod, which means integrating with Git and GitHub. Let’s look at this last point in a bit of detail.
+* Operational tools: manual CRUD access to the databases \- because I built in a way of manually adding data, but didn’t build a way to remove it. For example, filling in gaps in the data when the Pi was off, or removing bad data.
+* We could keep track of *versions* and feature toggles for new features. Maybe if I keep developing the code.
 
 ## **New OpenWeatherMap API v3 (TODO)**
 
