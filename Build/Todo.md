@@ -2,3 +2,4 @@
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | - | - | Update all libraries | P1 | TODO | ✅ | recover credentials | - |
 | - | - | Write context framework | P1 | TODO | ✅ | - | - |
+| - | - | Replace credentials.py with .env + pyenv security handling | P1 | TODO | ✅ | - | - |
